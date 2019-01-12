@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
@@ -19,18 +20,9 @@ func init() {
 }
 
 func main() {
-	// if len(os.Args) < 4 {
-	// 	fmt.Fprintf(os.Stderr, "Usage: %s <broker> <group> <topics..>\n",
-	// 		os.Args[0])
-	// 	os.Exit(1)
-	// }
-
 	broker := "localhost"
-	// broker := os.Args[1]
 	group := "myGroup"
-	// group := os.Args[2]
 	topics := []string{"myTopic", "^aRegex.*[Tt]opic"}
-	// topics := os.Args[3:]
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
@@ -69,13 +61,25 @@ func main() {
 
 			switch e := ev.(type) {
 			case kafka.AssignedPartitions:
-				parts := make([]kafka.TopicPartition,
-					len(e.Partitions))
+				limit := time.Now().Add(time.Duration(-24)*time.Hour).UnixNano() / int64(time.Millisecond)
+				parts := make([]kafka.TopicPartition, len(e.Partitions))
 				for i, tp := range e.Partitions {
-					tp.Offset = kafka.OffsetTail(5) // Set start offset to 5 messages from end of partition
+					offset, _ := kafka.NewOffset(limit)
+					tp.Offset = offset
+					fmt.Printf("offset query: %v\n", tp.Offset)
+					// tp.Offset = kafka.OffsetTail(5) // Set start offset to 5 messages from end of partition
 					parts[i] = tp
 				}
 				fmt.Printf("Assign %v\n", parts)
+				fmt.Printf("time limit: %d\n", limit)
+				parts, err = c.OffsetsForTimes(parts, 10000)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Failed to get offset: %s\n", err)
+					os.Exit(1)
+				}
+				for _, tp := range parts {
+					fmt.Printf("offset: %v\n", tp.Offset)
+				}
 				c.Assign(parts)
 			case *kafka.Message:
 				handleMessage(e)
