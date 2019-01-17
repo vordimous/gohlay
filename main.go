@@ -21,6 +21,7 @@ var (
 	topicConfigMap *kafka.ConfigMap
 	selfProducer   *kafka.Producer
 	maxOffset      kafka.Offset
+	timeNow        uint64
 )
 
 func init() {
@@ -32,6 +33,7 @@ func init() {
 	group = "myGroup"
 	topics = []string{"myTopic", "^aRegex.*[Tt]opic"}
 	maxOffset, _ = kafka.NewOffset(math.MaxInt64)
+	timeNow = uint64(time.Now().UnixNano() / int64(time.Millisecond))
 }
 
 func main() {
@@ -101,13 +103,23 @@ func scanTopic(handleMessage func(*kafka.Message)) {
 }
 
 func indexMsg(msg *kafka.Message) {
-	if delay, fin, exists := getDelay(msg.Headers); exists && fin == "" {
-		key := getKey(msg.TopicPartition.Offset, delay)
-		if _, exists := toDeliver[key]; !exists {
-			toDeliver[key] = false
+	delay, key, hasHeader := getDelay(msg.Headers)
+	if hasHeader {
+		if key == "" && delay != 0 {
+			fmt.Printf("%d < %d\n", delay, timeNow)
+			if delay < timeNow {
+				key = getKey(msg.TopicPartition.Offset, delay)
+				if _, exists := toDeliver[key]; !exists {
+					toDeliver[key] = false
+				} else {
+					toDeliver[key] = true
+				}
+			} else {
+				fmt.Printf("not time yet: %v\n", msg.TopicPartition.Offset)
+			}
+		} else if key != "" {
+			toDeliver[key] = true
 		}
-	} else if fin != "" {
-		toDeliver[fin] = true
 	} else {
 		fmt.Printf("no gohlay: %v\n", msg.TopicPartition.Offset)
 	}
@@ -117,14 +129,15 @@ func getKey(offset kafka.Offset, delay uint64) string {
 	return fmt.Sprintf("%v-%d", offset, delay)
 }
 
-func getDelay(headers []kafka.Header) (delay uint64, fin string, exists bool) {
+func getDelay(headers []kafka.Header) (delay uint64, key string, exists bool) {
 	for _, h := range headers {
 		if h.Key == "GOHLAY" {
 			delay = binary.BigEndian.Uint64(h.Value)
 			exists = true
 		}
 		if h.Key == "GOHLAY_FIN" {
-			fin = string(h.Value)
+			key = string(h.Value)
+			exists = true
 		}
 	}
 	return
@@ -179,7 +192,7 @@ func doDeliver() {
 			}
 		}
 	}()
-
+	fmt.Printf("Items to deliver: %d\n", len(toDeliver))
 	scanTopic(sendMsg)
 
 	// Wait for message deliveries before shutting down
