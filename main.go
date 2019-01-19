@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/binary"
 	"fmt"
 	"math"
 	"os"
@@ -87,6 +86,8 @@ func scanTopic(handleMessage func(*kafka.Message)) {
 			case *kafka.Message:
 				if e.TopicPartition.Offset < maxOffset {
 					handleMessage(e)
+				} else {
+					run = false
 				}
 			case kafka.PartitionEOF:
 				fmt.Printf("%% Reached %v\n", e)
@@ -103,25 +104,19 @@ func scanTopic(handleMessage func(*kafka.Message)) {
 }
 
 func indexMsg(msg *kafka.Message) {
-	delay, key, hasHeader := getDelay(msg.Headers)
+	delay, finKey, hasHeader := getDelay(msg.Headers)
 	if hasHeader {
-		if key == "" && delay != 0 {
-			fmt.Printf("%d < %d\n", delay, timeNow)
+		if finKey == "" && delay != 0 {
 			if delay < timeNow {
-				key = getKey(msg.TopicPartition.Offset, delay)
-				if _, exists := toDeliver[key]; !exists {
-					toDeliver[key] = false
-				} else {
-					toDeliver[key] = true
-				}
+				toDeliver[getKey(msg.TopicPartition.Offset, delay)] = true
 			} else {
-				fmt.Printf("not time yet: %v\n", msg.TopicPartition.Offset)
+				fmt.Println("not time yet: ", msg.TopicPartition.Offset)
 			}
-		} else if key != "" {
-			toDeliver[key] = true
+		} else if finKey != "" {
+			delete(toDeliver, finKey)
 		}
 	} else {
-		fmt.Printf("no gohlay: %v\n", msg.TopicPartition.Offset)
+		fmt.Println("no gohlay: ", msg.TopicPartition.Offset)
 	}
 }
 
@@ -132,7 +127,12 @@ func getKey(offset kafka.Offset, delay uint64) string {
 func getDelay(headers []kafka.Header) (delay uint64, key string, exists bool) {
 	for _, h := range headers {
 		if h.Key == "GOHLAY" {
-			delay = binary.BigEndian.Uint64(h.Value)
+			timeString := string(h.Value)
+			if deliveryTime, err := time.Parse(time.RFC3339, timeString); err == nil {
+				delay = uint64(deliveryTime.UnixNano() / int64(time.Millisecond))
+			} else {
+				fmt.Fprintf(os.Stderr, "Reading GOHLAY header: %s\n", err)
+			}
 			exists = true
 		}
 		if h.Key == "GOHLAY_FIN" {
@@ -146,12 +146,12 @@ func getDelay(headers []kafka.Header) (delay uint64, key string, exists bool) {
 func getPartitions(c *kafka.Consumer, partitions []kafka.TopicPartition) ([]kafka.TopicPartition, error) {
 	parts := make([]kafka.TopicPartition, len(partitions))
 	var err error
-	if true {
+	if false {
 		limit := time.Now().Add(time.Duration(-5)*time.Minute).UnixNano() / int64(time.Millisecond)
 		for i, tp := range partitions {
 			offset, _ := kafka.NewOffset(limit)
 			tp.Offset = offset
-			fmt.Printf("offset query: %v\n", tp.Offset)
+			fmt.Printf("offset query time: %v\n", tp.Offset)
 			parts[i] = tp
 		}
 		parts, err = c.OffsetsForTimes(parts, 10000)
@@ -159,11 +159,11 @@ func getPartitions(c *kafka.Consumer, partitions []kafka.TopicPartition) ([]kafk
 		for i, tp := range partitions {
 			offset, _ := kafka.NewOffset(0)
 			tp.Offset = offset
-			fmt.Printf("offset 0: %v\n", tp.Offset)
+			fmt.Printf("offset query value: %v\n", tp.Offset)
 			parts[i] = tp
 		}
 	}
-	fmt.Printf("Assign %v\n", parts)
+	fmt.Printf("Assign partition(s) %v\n", parts)
 	return parts, err
 }
 
@@ -192,14 +192,15 @@ func doDeliver() {
 			}
 		}
 	}()
-	fmt.Printf("Items to deliver: %d\n", len(toDeliver))
+	fmt.Println("# to deliver: ", len(toDeliver))
 	scanTopic(sendMsg)
 
 	// Wait for message deliveries before shutting down
-	for pending := 1; pending > 0; pending = selfProducer.Flush(5 * 1000) {
-		fmt.Printf("waiting for sends, %d remaining\n", pending)
+	for pending := 1; pending > 0; pending = selfProducer.Flush(1000) {
+		fmt.Printf("waiting for message deliveries, %d remaining\n", pending)
 	}
-	fmt.Printf("fin %d\n", didD)
+	fmt.Println("# delivered: ", didD)
+	fmt.Println("fin")
 }
 
 func sendMsg(msg *kafka.Message) {
