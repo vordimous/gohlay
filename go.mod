@@ -1,5 +1,5 @@
 module github.com/vordimous/gohlay
 
-go 1.12
+go 1.23.2
 
-require github.com/confluentinc/confluent-kafka-go v1.1.0
+require github.com/confluentinc/confluent-kafka-go/v2 v2.6.0

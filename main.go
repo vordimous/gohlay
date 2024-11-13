@@ -8,14 +8,13 @@ import (
 	"syscall"
 	"time"
 
-	kafka "github.com/confluentinc/confluent-kafka-go/kafka"
+	kafka "github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
 var (
-	toDeliver      map[string]bool
+	isDelivered    map[string]bool
 	sigchan        chan os.Signal
 	broker         string
-	group          string
 	topics         []string
 	topicConfigMap *kafka.ConfigMap
 	selfProducer   *kafka.Producer
@@ -24,24 +23,24 @@ var (
 )
 
 func init() {
-	fmt.Fprintf(os.Stderr, "Kafka Lib Version: %v\n", kafka.LibraryVersion())
-	toDeliver = map[string]bool{}
+	_, kafkaVersion := kafka.LibraryVersion()
+	fmt.Fprintf(os.Stderr, "Kafka Lib Version: %v\n", kafkaVersion)
+	isDelivered = map[string]bool{}
 	sigchan = make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
-	broker = "kafka"
-	group = "myGroup"
-	topics = []string{"myTopic", "^aRegex.*[Tt]opic"}
-	maxOffset, _ = kafka.NewOffset(math.MaxInt64)
 	timeNow = uint64(time.Now().UnixNano() / int64(time.Millisecond))
+	broker = "localhost:9092"
+	topics = []string{"myTopic"}
+	maxOffset, _ = kafka.NewOffset(math.MaxInt64)
 }
 
 func main() {
 	topicConfigMap = &kafka.ConfigMap{
 		"bootstrap.servers":               broker,
-		"group.id":                        group,
 		"go.application.rebalance.enable": true, // delegate Assign() responsibility to app
 		"session.timeout.ms":              6000,
+		"enable.partition.eof":            true,
 		"default.topic.config":            kafka.ConfigMap{"auto.offset.reset": "earliest"},
 	}
 	scanTopic(indexMsg)
@@ -49,6 +48,9 @@ func main() {
 }
 
 func scanTopic(handleMessage func(*kafka.Message)) {
+	group := fmt.Sprintf("group.id=%d-%d", timeNow, len(isDelivered))
+	fmt.Printf("scanTopic group %s\n", group)
+	topicConfigMap.Set(group)
 	c, err := kafka.NewConsumer(topicConfigMap)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to create consumer: %s\n", err)
@@ -63,8 +65,6 @@ func scanTopic(handleMessage func(*kafka.Message)) {
 		fmt.Printf("Closing consumer\n")
 		c.Close()
 	}()
-
-	fmt.Println("scan")
 
 	run := true
 	for run == true {
@@ -110,17 +110,18 @@ func scanTopic(handleMessage func(*kafka.Message)) {
 }
 
 func indexMsg(msg *kafka.Message) {
+	fmt.Printf("indexMsg %v\n", msg)
 	delay, finKey, hasHeader := getDelay(msg.Headers)
 	if hasHeader {
 		if finKey == "" && delay != 0 {
 			if delay < timeNow {
-				toDeliver[getKey(msg.TopicPartition.Offset, delay)] = true
-				fmt.Println("toDeliver: ", getKey(msg.TopicPartition.Offset, delay))
+				isDelivered[getKey(msg.TopicPartition.Offset, delay)] = false // set key to be delivered with a delivery value of false
+				fmt.Println("isDelivered: ", getKey(msg.TopicPartition.Offset, delay))
 			} else {
 				fmt.Println("not time yet: ", msg.TopicPartition.Offset)
 			}
 		} else if finKey != "" {
-			delete(toDeliver, finKey)
+			delete(isDelivered, finKey)
 		}
 	} else {
 		fmt.Println("no gohlay: ", msg.TopicPartition.Offset)
@@ -128,14 +129,16 @@ func indexMsg(msg *kafka.Message) {
 }
 
 func getKey(offset kafka.Offset, delay uint64) string {
+	fmt.Printf("getKey %v %d\n", offset, delay)
 	return fmt.Sprintf("%v-%d", offset, delay)
 }
 
 func getDelay(headers []kafka.Header) (delay uint64, key string, exists bool) {
+	fmt.Printf("getDelay %v\n", headers)
 	for _, h := range headers {
 		if h.Key == "GOHLAY" {
 			timeString := string(h.Value)
-			if deliveryTime, err := time.Parse(time.RFC3339, timeString); err == nil {
+			if deliveryTime, err := time.Parse(time.UnixDate, timeString); err == nil {
 				delay = uint64(deliveryTime.UnixNano() / int64(time.Millisecond))
 			} else {
 				fmt.Fprintf(os.Stderr, "Reading GOHLAY header: %s\n", err)
@@ -151,6 +154,7 @@ func getDelay(headers []kafka.Header) (delay uint64, key string, exists bool) {
 }
 
 func getPartitions(c *kafka.Consumer, partitions []kafka.TopicPartition) ([]kafka.TopicPartition, error) {
+	fmt.Printf("%v %v\n", c, partitions)
 	parts := make([]kafka.TopicPartition, len(partitions))
 	var err error
 	if false {
@@ -175,45 +179,55 @@ func getPartitions(c *kafka.Consumer, partitions []kafka.TopicPartition) ([]kafk
 }
 
 func doDeliver() {
-
+	fmt.Printf("doDeliver\n")
 	if p, err := kafka.NewProducer(&kafka.ConfigMap{
-		"bootstrap.servers": broker,
-		"group.id":          group}); err != nil {
+		"bootstrap.servers": broker}); err != nil {
 		panic(err)
 	} else {
 		selfProducer = p
 	}
 
-	defer selfProducer.Close()
+	fmt.Printf("selfProducer %v\n", selfProducer)
 	didD := 0
+	defer func() {
+		selfProducer.Close()
+		fmt.Println("# delivered: ", didD)
+	}()
 	// Delivery report handler for produced messages
 	go func() {
 		for e := range selfProducer.Events() {
+			fmt.Printf("e %v\n", e)
 			switch ev := e.(type) {
 			case *kafka.Message:
 				if ev.TopicPartition.Error != nil {
 					fmt.Printf("Delivery failed: %v\n", ev.TopicPartition)
 				} else {
+					fmt.Printf("Delivered message to %v\n", ev.TopicPartition)
 					didD++
 				}
+			default:
+				fmt.Printf("Ignored produce %v\n", ev)
 			}
 		}
 	}()
-	fmt.Println("# to deliver: ", len(toDeliver))
+	fmt.Println("# to deliver: ", len(isDelivered))
 	scanTopic(sendMsg)
 
 	// Wait for message deliveries before shutting down
 	for pending := 1; pending > 0; pending = selfProducer.Flush(1000) {
 		fmt.Printf("waiting for message deliveries, %d remaining\n", pending)
 	}
-	fmt.Println("# delivered: ", didD)
 	fmt.Println("fin")
 }
 
 func sendMsg(msg *kafka.Message) {
+	fmt.Printf("sendMsg %v\n", msg)
 	if delay, fin, exists := getDelay(msg.Headers); exists && fin == "" {
 		key := getKey(msg.TopicPartition.Offset, delay)
-		if delivered, exists := toDeliver[key]; exists && !delivered {
+		delivered, exists := isDelivered[key]
+		fmt.Printf("exists, delivered, key %v %v %v\n", exists, delivered, key)
+		if delivered, exists := isDelivered[key]; exists && !delivered {
+			fmt.Printf("exists, delivered %v %v\n", exists, delivered)
 			var headers = []kafka.Header{}
 			for _, h := range msg.Headers {
 				if h.Key == "GOHLAY" {
