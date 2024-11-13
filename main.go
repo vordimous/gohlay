@@ -80,6 +80,7 @@ func scanTopic(handleMessage func(*kafka.Message)) {
 
 			switch e := ev.(type) {
 			case kafka.AssignedPartitions:
+				fmt.Printf("scanTopic AssignedPartitions %v\n", e)
 				parts, err := getPartitions(c, e.Partitions)
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "Failed to get offset: %s\n", err)
@@ -87,6 +88,7 @@ func scanTopic(handleMessage func(*kafka.Message)) {
 				}
 				c.Assign(parts)
 			case *kafka.Message:
+				fmt.Printf("scanTopic Message %v\n", e)
 				if e.TopicPartition.Offset < maxOffset {
 					handleMessage(e)
 				} else {
@@ -154,7 +156,7 @@ func getDelay(headers []kafka.Header) (delay uint64, key string, exists bool) {
 }
 
 func getPartitions(c *kafka.Consumer, partitions []kafka.TopicPartition) ([]kafka.TopicPartition, error) {
-	fmt.Printf("%v %v\n", c, partitions)
+	fmt.Printf("getPartitions %v %v\n", c, partitions)
 	parts := make([]kafka.TopicPartition, len(partitions))
 	var err error
 	if false {
