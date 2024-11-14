@@ -12,7 +12,7 @@ RUN xx-apk --update --no-cache add musl-dev gcc
 
 RUN xx-go --wrap
 
-WORKDIR /usr/local/src/golay
+WORKDIR /usr/local/src/gohlay
 
 ENV CGO_ENABLED=1
 
@@ -23,14 +23,14 @@ COPY . .
 
 # See https://github.com/confluentinc/confluent-kafka-go#librdkafka
 # See https://github.com/confluentinc/confluent-kafka-go#static-builds-on-linux
-RUN go build -ldflags '-linkmode external -extldflags "-static"' -tags musl -o /golay .
-RUN xx-verify /golay
+RUN go build -ldflags '-linkmode external -extldflags "-static"' -tags musl -o /gohlay .
+RUN xx-verify /gohlay
 
 # Deploy the application binary into a lean image
 FROM gcr.io/distroless/base-debian11 AS build-release-stage
 
 WORKDIR /
 
-COPY --from=build-stage /golay /golay
+COPY --from=build-stage /gohlay /gohlay
 
-ENTRYPOINT ["/golay"]
+ENTRYPOINT ["/gohlay"]

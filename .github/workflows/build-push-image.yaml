@@ -18,18 +18,18 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/golay
+          images: ghcr.io/${{ github.repository_owner }}/gohlay
           tags: |
             type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'main') }}
             type=ref,event=branch
             type=sha
           labels: |
-            org.opencontainers.image.title=Golay
-            org.opencontainers.image.description=Supporting container for Golay
+            org.opencontainers.image.title=Gohlay
+            org.opencontainers.image.description=Supporting container for Gohlay
             org.opencontainers.image.source=https://github.com/${{ github.repository }}/tree/main
           annotations: |
-            manifest:org.opencontainers.image.title=Golay
-            manifest:org.opencontainers.image.description=Supporting container for Golay
+            manifest:org.opencontainers.image.title=Gohlay
+            manifest:org.opencontainers.image.description=Supporting container for Gohlay
             manifest:org.opencontainers.image.source=https://github.com/${{ github.repository }}/tree/main
 
       - name: Set up Docker Buildx
