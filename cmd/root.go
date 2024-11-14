@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -14,15 +15,9 @@ import (
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "gohlay",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
+	Short: "Replay messages on a Kafka topic after a deadline",
+	Long: `Gohlay is a delayed delivery tool for producing messages onto
+Kafka topics on a schedule set by a Kafka message header.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		config.SetupLogging()
 		config.PrintConfig()
@@ -43,6 +38,7 @@ var Silent bool
 var Verbose bool
 var Debug bool
 var JsonOut bool
+var Deadline int64
 
 // kafka options
 var BootstrapServers string
@@ -63,7 +59,11 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&JsonOut, "json", false, "Display output in the console as JSON.")
 	viper.BindPFlag("json", rootCmd.PersistentFlags().Lookup("json"))
 
-	// kafka
+	// Gohlay
+	rootCmd.PersistentFlags().Int64VarP(&Deadline, "deadline", "d", time.Now().Unix(), "Sets the delivery deadline. (Format: Unix Timestamp)")
+	viper.BindPFlag("deadline", rootCmd.PersistentFlags().Lookup("deadline"))
+
+	// Kafka
 	rootCmd.PersistentFlags().StringVarP(&BootstrapServers, "bootstrap_servers", "b", "localhost:9092", "Sets the \"bootstrap.servers\" parameter in the kafka.ConfigMap")
 	viper.BindPFlag("bootstrap_servers", rootCmd.PersistentFlags().Lookup("bootstrap_servers"))
 	rootCmd.PersistentFlags().StringArrayVarP(&Topics, "topics", "t", []string{"gohlay"}, "Sets the kafka topics to use")

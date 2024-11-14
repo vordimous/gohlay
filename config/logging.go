@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// SetupLogging setup the configured logging options
 func SetupLogging() {
 	log.SetOutput(os.Stdout)
 
@@ -28,6 +29,7 @@ func SetupLogging() {
 	log.SetLevel(logLevel)
 }
 
+// PrintConfig print all user defined settings
 func PrintConfig() {
 	for key, value := range viper.GetViper().AllSettings() {
 		log.WithFields(log.Fields{

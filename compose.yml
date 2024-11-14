@@ -1,5 +1,12 @@
 services:
 
+  gohlay:
+    build: ./
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+    command: |
+      run -v -b kafka:29092 -t gohlay
 
   kafka:
     image: bitnami/kafka:3.9

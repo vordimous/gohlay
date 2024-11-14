@@ -11,6 +11,7 @@ func init() {
 	log.Debug("Kafka Lib Version | ", kafkaVersion)
 }
 
+// GetConsumer creates the kafka.ConfigMap based on the configured settings for a Consumer
 func GetConsumer() (config *kafka.ConfigMap, topics []string) {
 	config = &kafka.ConfigMap{
 		"bootstrap.servers":               viper.GetString("bootstrap_servers"),
@@ -24,6 +25,7 @@ func GetConsumer() (config *kafka.ConfigMap, topics []string) {
 	return
 }
 
+// GetProducer creates the kafka.ConfigMap based on the configured settings for a Producer
 func GetProducer() (config *kafka.ConfigMap) {
 	config = &kafka.ConfigMap{
 		"bootstrap.servers": viper.GetString("bootstrap_servers"),
