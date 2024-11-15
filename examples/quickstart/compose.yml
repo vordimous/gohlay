@@ -1,9 +1,11 @@
+name: gohlay-quickstart
 services:
 
   gohlay:
-    build: ./
+    image: ghcr.io/vordimous/gohlay
+    restart: unless-stopped
     depends_on:
-      kafka-init:
+      kafka-data-init:
         condition: service_completed_successfully
     command: |
       run -v -b kafka:29092 -t gohlay
@@ -70,3 +72,23 @@ services:
     command: "bash"
     stdin_open: true
     tty: true
+
+  kafka-data-init:
+    image: confluentinc/cp-kafkacat:7.1.9
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo '{"id":200000,"message":"Hello, Gohlay"}' | kafkacat -P \
+          -b kafka:29092 \
+          -k "now" \
+          -t gohlay \
+          -H GOHLAY="$(date)"
+
+        echo '{"id":200000,"message":"Hello, Future Gohlay"}' | kafkacat -P \
+          -b kafka:29092 \
+          -k "5min" \
+          -t gohlay \
+          -H GOHLAY="$(date -v +5M)"
