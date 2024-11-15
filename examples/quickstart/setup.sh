@@ -3,7 +3,8 @@ set -e
 
 # Start or restart Gohlay
 if [ -z "$(docker compose ps -q gohlay)" ]; then
-    docker compose up -d
+  docker pull ghcr.io/vordimous/gohlay:latest
+  docker compose up -d
 else
-    docker compose up -d --force-recreate --no-deps gohlay
+  docker compose up -d --force-recreate --no-deps gohlay
 fi

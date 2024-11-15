@@ -2,7 +2,7 @@ name: gohlay-quickstart
 services:
 
   gohlay:
-    image: ghcr.io/vordimous/gohlay:sha-6ec1dcf
+    image: ghcr.io/vordimous/gohlay
     restart: unless-stopped
     depends_on:
       kafka-data-init:
