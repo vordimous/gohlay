@@ -25,7 +25,7 @@ func ParseHeaders(headers []kafka.Header) (deliveryTime int64, isDelivered bool,
 			}
 			gohlayed = true
 		}
-		if h.Key == "GOHLAY_FIN" {
+		if h.Key == "GOHLAY_DELIVERED" {
 			gohlayed = true
 			isDeliveredKey = string(h.Value)
 			isDelivered = true

@@ -12,39 +12,22 @@ This quickstart will demonstrate how producers can send delayed messages using t
 
 Kafka is setup and the Gohlay service has executed once and did not find any gohlayed messages.
 
-- Generate a message to be delayed
-
-```bash
-echo '{"id":200000,"message":"Hello, Gohlay"}' | docker compose exec -T kafkacat \
-  kafkacat -P \
-    -b kafka:29092 \
-    -k "now" \
-    -t gohlay \
-    -H GOHLAY="$(date)"
-```
+- Two golayed messages have been producted onto the `gohlay` topic. One message was scheduled to be sent immediately and one message was set to be delivered in the future. Delivered messages will replace the Gohlay header with a delivery header
+- Check the [Kafka UI](http://localhost:8080/ui/clusters/local/all-topics/gohlay/messages) for your waiting messages. will see the the `now` message has a second message and the `future` message only has one.
+- The gohlay service is auto restarting to run new checks for delayed messages.
+- Wait for the `future` messages delay time to pass and you will see the second delayed message after refreshing the [Kafka UI](http://localhost:8080/ui/clusters/local/all-topics/gohlay/messages).
+- You can Generate a new delayed message and see it get delivered after 1 minute
 
 ```bash
 echo '{"id":200000,"message":"Hello, Future Gohlay"}' | docker compose exec -T kafkacat \
   kafkacat -P \
     -b kafka:29092 \
-    -k "1min" \
+    -k "wait1min" \
     -t gohlay \
     -H GOHLAY="$(date -v +1M)"
 ```
 
-Check the [Kafka UI](http://localhost:8080/ui/clusters/local/all-topics/gohlay/messages) for your waiting messages
-
-- restart the gohlay service re-execute the `gohlay run` command
-
-```bash
-docker compose restart gohlay
-```
-
-- In the [Kafka UI]() you will see the the `now` message has a second message.
-
-- After you wait 5 minutes and restart the `gohlay` service again you will see the second delayed message
-
-- the compose stack
+- Teardown the compose stack.
 
 ```bash
 ./teardown.sh

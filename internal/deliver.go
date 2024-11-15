@@ -64,7 +64,7 @@ func deliverMsg(msg *kafka.Message) {
 				if h.Key == "GOHLAY" {
 					headers = append(headers,
 						kafka.Header{
-							Key:   "GOHLAY_FIN",
+							Key:   "GOHLAY_DELIVERED",
 							Value: []byte(deliveryKey),
 						})
 				} else {

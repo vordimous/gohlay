@@ -2,7 +2,7 @@ name: gohlay-quickstart
 services:
 
   gohlay:
-    image: ghcr.io/vordimous/gohlay
+    image: ghcr.io/vordimous/gohlay:sha-6ec1dcf
     restart: unless-stopped
     depends_on:
       kafka-data-init:
@@ -89,6 +89,6 @@ services:
 
         echo '{"id":200000,"message":"Hello, Future Gohlay"}' | kafkacat -P \
           -b kafka:29092 \
-          -k "5min" \
+          -k "future" \
           -t gohlay \
-          -H GOHLAY="$(date -v +5M)"
+          -H GOHLAY="$(date -d "+30 seconds")"
