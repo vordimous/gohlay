@@ -32,19 +32,18 @@ func ScanTopic(handleMessage func(*kafka.Message)) {
 	group := fmt.Sprintf("group.id=%d-%d | ", viper.GetInt64("deadline"), len(isDelivered))
 	topicConfigMap.Set(group)
 	log.Debug("scan with group.id | ", group)
-	log.Info(topicConfigMap)
+	log.Debug(topicConfigMap)
 	c, err := kafka.NewConsumer(topicConfigMap)
 	if err != nil {
-		log.Error("Failed to create consumer ", err)
+		log.Fatal("Failed to create consumer ", err)
 		os.Exit(1)
 	}
 	if err := c.SubscribeTopics(topics, nil); err != nil {
-		log.Error("Failed subscribe ", err)
+		log.Fatal("Failed subscribe ", err)
 		os.Exit(1)
 	}
 
 	defer func() {
-		log.Info("Closing consumer")
 		c.Close()
 	}()
 
@@ -65,7 +64,7 @@ func ScanTopic(handleMessage func(*kafka.Message)) {
 				log.Debug("AssignedPartitions | ", e)
 				parts, err := common.GetAssignedPartitions(c, e.Partitions)
 				if err != nil {
-					log.Error("Failed to get offset| ", err)
+					log.Fatal("Failed to get offset | ", err)
 					os.Exit(1)
 				}
 				c.Assign(parts)

@@ -19,7 +19,7 @@ func ParseHeaders(headers []kafka.Header) (deliveryTime int64, isDelivered bool,
 		if h.Key == "GOHLAY" {
 			timeString := string(h.Value)
 			if t, err := time.Parse(time.UnixDate, timeString); err == nil {
-				deliveryTime = t.Unix()
+				deliveryTime = t.UnixMilli()
 			} else {
 				log.Error("Calculating time remaining from GOHLAY header | ", err)
 			}

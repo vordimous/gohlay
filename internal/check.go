@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"fmt"
 	"maps"
 	"slices"
 
@@ -33,21 +34,22 @@ func GetDeliveries() ([]string) {
 
 func indexMsg(msg *kafka.Message) {
 	deadline := viper.GetInt64("deadline")
-	deliveryTime, fin, finKey, hasHeader := common.ParseHeaders(msg.Headers)
+	deliveryTime, delivered, deliveredKey, hasHeader := common.ParseHeaders(msg.Headers)
 	if hasHeader {
-		if !fin && deliveryTime != 0 {
+		if !delivered && deliveryTime != 0 {
 			log.Debug("Message time remaining | ", deliveryTime - deadline)
 			if deliveryTime < deadline {
-				isDelivered[common.FmtKafkaKey(msg.TopicPartition.Offset, deliveryTime)] = false // set key to be delivered with a delivery value of false
-				log.Debug("Setting message for delivery | ", common.FmtKafkaKey(msg.TopicPartition.Offset, deliveryTime))
+				deliveryKey := common.FmtKafkaKey(msg.TopicPartition.Offset, deliveryTime)
+				isDelivered[deliveryKey] = false // set key to be delivered with a delivery value of false
+				log.Debug("Setting message for delivery | ", fmt.Sprintf("%d-%s %s", msg.TopicPartition.Offset, msg.Key, deliveryKey))
 			} else {
-				log.Debug("Message not ready for delivery | ", msg.TopicPartition.Offset)
+				log.Debug("Message not ready for delivery | ", fmt.Sprintf("%d-%s", msg.TopicPartition.Offset, msg.Key) )
 			}
-		} else if fin {
-			delete(isDelivered, finKey)
-			log.Debug("Message not ready for delivery | ", finKey)
+		} else if delivered {
+			delete(isDelivered, deliveredKey)
+			log.Debug("Message is already delivered | ", fmt.Sprintf("%d-%s %s", msg.TopicPartition.Offset, msg.Key, deliveredKey))
 		}
 	} else {
-		log.Debug("Messaged is not gohlayed | ", msg.TopicPartition.Offset)
+		log.Debug("Messaged is not gohlayed | ", fmt.Sprintf("%d-%s", msg.TopicPartition.Offset, msg.Key) )
 	}
 }

@@ -60,7 +60,7 @@ func init() {
 	viper.BindPFlag("json", rootCmd.PersistentFlags().Lookup("json"))
 
 	// Gohlay
-	rootCmd.PersistentFlags().Int64VarP(&Deadline, "deadline", "d", time.Now().Unix(), "Sets the delivery deadline. (Format: Unix Timestamp)")
+	rootCmd.PersistentFlags().Int64VarP(&Deadline, "deadline", "d", time.Now().UnixMilli(), "Sets the delivery deadline. (Format: Unix Timestamp)")
 	viper.BindPFlag("deadline", rootCmd.PersistentFlags().Lookup("deadline"))
 
 	// Kafka
