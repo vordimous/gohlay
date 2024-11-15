@@ -1,5 +1,5 @@
 FROM --platform=$BUILDPLATFORM tonistiigi/xx:1.2.1@sha256:8879a398dedf0aadaacfbd332b29ff2f84bc39ae6d4e9c0a1109db27ac5ba012 AS xx
-FROM --platform=$BUILDPLATFORM golang:1.21-alpine3.18 AS build-stage
+FROM --platform=$BUILDPLATFORM golang:1.23-alpine3.20 AS build-stage
 
 ## Copy from the xx platform build helper
 COPY --from=xx / /
