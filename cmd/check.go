@@ -23,8 +23,7 @@ Example Output:
 ["8-1731612338","9-1731614359","10-1731614360","11-1731614361"]
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		config.SetupLogging()
-		config.PrintConfig()
+		config.Load()
 		internal.CheckForDeliveries()
 		deliveriesJson, _ := json.Marshal(internal.GetDeliveries())
 		fmt.Println(string(deliveriesJson))

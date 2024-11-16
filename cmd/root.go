@@ -19,8 +19,7 @@ var rootCmd = &cobra.Command{
 	Long: `Gohlay is a delayed delivery tool for producing messages onto
 Kafka topics on a schedule set by a Kafka message header.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		config.SetupLogging()
-		config.PrintConfig()
+		config.Load()
 	},
 }
 
@@ -34,22 +33,24 @@ func Execute() {
 }
 
 // dev options
+var cfgFileDir string
 var Silent bool
 var Verbose bool
 var Debug bool
 var JsonOut bool
+
+// Gohlay options
 var Deadline int64
 
 // kafka options
-var BootstrapServers string
+var bootstrap_servers []string
 var Topics []string
 
 func init() {
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
 
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.gohlay.yaml)")
+	// Dev
+	rootCmd.PersistentFlags().StringVar(&cfgFileDir, "config_dir", ".", "config file directory.")
+	viper.BindPFlag("config_dir", rootCmd.PersistentFlags().Lookup("config_dir"))
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "Display more verbose output in console output.")
 	viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
 	rootCmd.PersistentFlags().BoolVar(&Debug, "debug", false, "Display debugging output in the console.")
@@ -64,7 +65,7 @@ func init() {
 	viper.BindPFlag("deadline", rootCmd.PersistentFlags().Lookup("deadline"))
 
 	// Kafka
-	rootCmd.PersistentFlags().StringVarP(&BootstrapServers, "bootstrap_servers", "b", "localhost:9092", "Sets the \"bootstrap.servers\" parameter in the kafka.ConfigMap")
+	rootCmd.PersistentFlags().StringArrayVarP(&bootstrap_servers, "bootstrap_servers", "b", []string{"localhost:9092"}, "Sets the \"bootstrap.servers\" parameter in the kafka.ConfigMap")
 	viper.BindPFlag("bootstrap_servers", rootCmd.PersistentFlags().Lookup("bootstrap_servers"))
 	rootCmd.PersistentFlags().StringArrayVarP(&Topics, "topics", "t", []string{"gohlay"}, "Sets the kafka topics to use")
 	viper.BindPFlag("topics", rootCmd.PersistentFlags().Lookup("topics"))

@@ -16,8 +16,7 @@ var runCmd = &cobra.Command{
 	Long: `Perform a check on the configured topics and deliver any
 messages that are past the deadline.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		config.SetupLogging()
-		config.PrintConfig()
+		config.Load()
 		internal.Run()
 	},
 }
