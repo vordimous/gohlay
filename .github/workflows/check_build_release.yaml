@@ -18,7 +18,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Run GoReleaser Linux
+      - name: Check GoReleaser Linux
         run: |
           docker run \
           		--rm \
@@ -33,7 +33,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run GoReleaser MacOS
+      - name: Check GoReleaser MacOS
         run: |
           docker run \
           		--rm \

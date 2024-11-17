@@ -1,4 +1,4 @@
-name: Extra container builder
+name: Image builder
 
 on:
   push:
