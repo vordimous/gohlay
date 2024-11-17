@@ -33,7 +33,7 @@ jobs:
           		--clean --config .goreleaser-Linux.yml
         env:
           GOLANG_CROSS_VERSION: v${{ matrix.go-version }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GORELEASER_TOKEN }}
 
       - name: Run GoReleaser MacOS
         run: |
@@ -49,4 +49,4 @@ jobs:
           		--clean --config .goreleaser-Darwin-cross.yml
         env:
           GOLANG_CROSS_VERSION: v${{ matrix.go-version }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GORELEASER_TOKEN }}
