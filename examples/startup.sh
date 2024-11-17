@@ -3,7 +3,7 @@ set -e
 
 REPO=vordimous/gohlay
 RELEASE_URL="https://github.com/$REPO/releases/download"
-GOHLAY_VERSION="${GOHLAY_VERSION:-latest}"
+GOHLAY_VERSION=""
 EXAMPLE_FOLDER=""
 AUTO_TEARDOWN=false
 WORKDIR=$(pwd)
@@ -58,10 +58,9 @@ done; shift
 operand=$*
 EXAMPLE_FOLDER=$(echo "$operand" | sed 's/\///g')
 [ -z "$EXAMPLE_FOLDER" ] && EXAMPLE_FOLDER="quickstart"
+[ -z "$GOHLAY_VERSION" ] && GOHLAY_VERSION=$(curl -s https://api.github.com/repos/$REPO/releases/latest | grep -i "tag_name" | awk -F '"' '{print $4}')
 
-[ -z "$GOHLAY_VERSION" ] && GOHLAY_VERSION=$(echo "$RELEASES_JSON" | grep -i "tag_name" | awk -F '"' '{print $4}')
-
-echo "==== Starting Gohlay Example $EXAMPLE_FOLDER at $WORKDIR ===="
+echo "==== Starting Gohlay $GOHLAY_VERSION Example $EXAMPLE_FOLDER at $WORKDIR ===="
 
 ! [ -d "$WORKDIR" ] && echo "Error: WORKDIR must be a valid directory." && exit2
 if [ -d "$WORKDIR" ] && ! [ -d "$WORKDIR/$EXAMPLE_FOLDER" ]; then
@@ -78,7 +77,7 @@ cd "$WORKDIR"/"$EXAMPLE_FOLDER"
 chmod u+x teardown.sh
 TEARDOWN_SCRIPT="$(pwd)/teardown.sh"
 printf "\n\n"
-echo "==== Starting Gohlay $EXAMPLE_FOLDER. Use this script to teardown ===="
+echo "==== Use this script to teardown ===="
 printf '%s\n' "$TEARDOWN_SCRIPT"
 sh setup.sh
 
