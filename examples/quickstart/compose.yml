@@ -11,6 +11,7 @@ services:
       GOHLAY_BOOTSTRAP_SERVERS: kafka:29092
       GOHLAY_TOPICS: gohlay
       GOHLAY_VERBOSE: true
+    command: run
 
   kafka:
     image: bitnami/kafka:3.9
