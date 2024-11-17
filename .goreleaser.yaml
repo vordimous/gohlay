@@ -12,53 +12,22 @@ before:
   hooks:
     # You may remove this if you don't use go modules.
     - go mod tidy
-    # you may remove this if you don't need go generate
-    - go generate ./...
 
 builds:
-#   - env:
-#       - CGO_ENABLED=1
-#       - CC=oa64-clang
-#       - CXX=oa64-clang++
-#     ldflags:
-#       - -linkmode external
-#       - -extldflags "-static"
-#     tags:
-#      - musl
-#     goos:
-#       # - linux
-#       # - freebsd
-#       - darwin
-
-
   - id: amd64
     goos:
       - darwin
+      - linux
     goarch:
       - amd64
-    env:
-      - CGO_ENABLED=1
-      - CC=o64-clang
-      - CXX=o64-clang++
-    flags:
-      - -trimpath
-    ldflags:
-      - -s -w -X main.version={{ .Version }}
-
-  - id: arm64
-    goarch:
       - arm64
-    goos:
-      - darwin
     env:
       - CGO_ENABLED=1
-      - CC=oa64-clang
-      - CXX=oa64-clang++
     flags:
       - -trimpath
     ldflags:
+      - -linkmode external
       - -s -w -X main.version={{ .Version }}
-
 
 
 
