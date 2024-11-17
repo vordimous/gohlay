@@ -10,9 +10,6 @@ on:
 jobs:
 
   release-binaries:
-    strategy:
-      matrix:
-        go-version: [ 1.23 ]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -31,10 +28,9 @@ jobs:
           		-v /var/run/docker.sock:/var/run/docker.sock \
           		-v `pwd`:/go/src/gohlay \
           		-w /go/src/gohlay \
-          		ghcr.io/goreleaser/goreleaser-cross:${GOLANG_CROSS_VERSION} \
+          		ghcr.io/goreleaser/goreleaser-cross:v1.23 \
           		--clean --skip=validate --skip=publish --config .goreleaser-Linux.yml
         env:
-          GOLANG_CROSS_VERSION: v${{ matrix.go-version }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run GoReleaser MacOS
@@ -47,8 +43,7 @@ jobs:
           		-v /var/run/docker.sock:/var/run/docker.sock \
           		-v `pwd`:/go/src/gohlay \
           		-w /go/src/gohlay \
-          		ghcr.io/goreleaser/goreleaser-cross:${GOLANG_CROSS_VERSION} \
+          		ghcr.io/goreleaser/goreleaser-cross:v1.23 \
           		--clean --skip=validate --skip=publish --config .goreleaser-Darwin-cross.yml
         env:
-          GOLANG_CROSS_VERSION: v${{ matrix.go-version }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

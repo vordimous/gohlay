@@ -29,10 +29,9 @@ func init() {
 // ScanTopic creates a unique consumer that reads all messages on the topics
 func ScanTopic(handleMessage func(*kafka.Message)) {
 	topicConfigMap, topics := config.GetConsumer()
-	group := fmt.Sprintf("group.id=%d-%d | ", viper.GetInt64("deadline"), len(isDelivered))
+	group := fmt.Sprintf("group.id=%d-%d", viper.GetInt64("deadline"), len(isDelivered))
 	topicConfigMap.Set(group)
-	log.Debug("scan with group.id | ", group)
-	log.Debug(topicConfigMap)
+	log.Debugf("Scanning with %+v", topicConfigMap)
 	c, err := kafka.NewConsumer(topicConfigMap)
 	if err != nil {
 		log.Fatal("Failed to create consumer ", err)
@@ -51,7 +50,7 @@ func ScanTopic(handleMessage func(*kafka.Message)) {
 	for run {
 		select {
 		case sig := <-sigchan:
-			log.Error("Caught signal, terminating | ", sig)
+			log.Errorf("Caught signal, terminating: %v", sig)
 			run = false
 		default:
 			ev := c.Poll(100)
@@ -61,10 +60,10 @@ func ScanTopic(handleMessage func(*kafka.Message)) {
 
 			switch e := ev.(type) {
 			case kafka.AssignedPartitions:
-				log.Debug("AssignedPartitions | ", e)
+				log.Debugf("AssignedPartitions: %v", e)
 				parts, err := common.GetAssignedPartitions(c, e.Partitions)
 				if err != nil {
-					log.Fatal("Failed to get offset | ", err)
+					log.Fatalf("Failed to get offset: %v", err)
 					os.Exit(1)
 				}
 				c.Assign(parts)
@@ -75,18 +74,17 @@ func ScanTopic(handleMessage func(*kafka.Message)) {
 					run = false
 				}
 			case kafka.PartitionEOF:
-				log.Debug("%% Reached | ", e)
 				maxOffset = e.Offset
-				log.Debug("%% maxOffset | ", maxOffset)
+				log.Debugf("%% Reached maxOffset: %v %v", maxOffset, e)
 				run = false
 			case kafka.RevokedPartitions:
-				log.Debug("%% Revoked | ", e)
+				log.Infof("%% Revoked: %v", e)
 				run = false
 			case kafka.Error:
-				log.Error("%% Error | ", e)
+				log.Errorf("%% Error: %v", e)
 				run = false
 			default:
-				log.Debug("Ignored | ", e)
+				log.Debugf("Ignored: %v", e)
 			}
 		}
 	}

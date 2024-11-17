@@ -21,7 +21,7 @@ func ParseHeaders(headers []kafka.Header) (deliveryTime int64, isDelivered bool,
 			if t, err := time.Parse(time.UnixDate, timeString); err == nil {
 				deliveryTime = t.UnixMilli()
 			} else {
-				log.Error("Calculating time remaining from GOHLAY header | ", err)
+				log.Errorf("Calculating time remaining from GOHLAY header %v", err)
 			}
 			gohlayed = true
 		}
@@ -36,7 +36,6 @@ func ParseHeaders(headers []kafka.Header) (deliveryTime int64, isDelivered bool,
 
 // GetAssignedPartitions finds the assigned partitions
 func GetAssignedPartitions(c *kafka.Consumer, partitions []kafka.TopicPartition) ([]kafka.TopicPartition, error) {
-	log.Info("GetAssignedPartitions | ", c, partitions)
 	parts := make([]kafka.TopicPartition, len(partitions))
 	var err error
 	if false {
@@ -44,7 +43,7 @@ func GetAssignedPartitions(c *kafka.Consumer, partitions []kafka.TopicPartition)
 		for i, tp := range partitions {
 			offset, _ := kafka.NewOffset(limit)
 			tp.Offset = offset
-			log.Debug("GetAssignedPartitions offset query time | ", tp.Offset)
+			log.Debugf("GetAssignedPartitions offset query time %v", tp.Offset)
 			parts[i] = tp
 		}
 		parts, err = c.OffsetsForTimes(parts, 10000)
@@ -52,10 +51,10 @@ func GetAssignedPartitions(c *kafka.Consumer, partitions []kafka.TopicPartition)
 		for i, tp := range partitions {
 			offset, _ := kafka.NewOffset(0)
 			tp.Offset = offset
-			log.Info("GetAssignedPartitions offset query value | ", tp.Offset)
+			log.Infof("GetAssignedPartitions offset query value %v", tp.Offset)
 			parts[i] = tp
 		}
 	}
-	log.Info("Assigned partition(s) | ", parts)
+	log.Infof("Assigned partition(s) %v", parts)
 	return parts, err
 }

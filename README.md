@@ -8,13 +8,18 @@ Gohlay gives power to both the Producer and Consumer because it doesn't prevent 
 
 ## Try it out
 
-Use the included [Compose stack](compose.yaml) to see Gohlay in action
+Run the [Quickstart](./examples/quickstart/) compose example to see Gohlay in action. The following script will download and run the quickstart with the lates Gohlay version or you can copy and run the [compose.yaml](./examples/quickstart/compose.yaml) yourself.
+
+```bash
+wget -qO- https://github.com/vordimous/gohlay/releases/latest/download/startup.sh | sh -
+```
 
 ## Roadmap
 
-- [ ] Config with flags, yaml, and Environment vars
-- [ ] custom headers and group id
-- [ ] SASL auth
+- [X] Config with flags, yaml, and Environment vars
+- [ ] configurable header names
+- [ ] configurable group id
+- [ ] Kafka SASL auth
 - [ ] Deliver to multiple topics
 - [ ] Deliver all message
 - [ ] Native CRON trigger

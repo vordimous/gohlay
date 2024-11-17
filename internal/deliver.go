@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"fmt"
 	"os"
 
 	kafka "github.com/confluentinc/confluent-kafka-go/v2/kafka"
@@ -26,7 +25,7 @@ func HandleDeliveries() {
 	didD := 0
 	defer func() {
 		producer.Close()
-		log.Info("Number of golayed messages delivered | ", didD)
+		log.Infof("Number of golayed messages delivered: %v", didD)
 	}()
 	// Delivery report handler for produced messages
 	go func() {
@@ -34,16 +33,16 @@ func HandleDeliveries() {
 			switch ev := e.(type) {
 			case *kafka.Message:
 				if ev.TopicPartition.Error != nil {
-					log.Error("Delivery failed: | ", ev.TopicPartition)
+					log.Errorf("Delivery failed: %+v", ev.TopicPartition)
 				} else {
 					didD++
 				}
 			default:
-				log.Debug("Ignored produce | ", ev)
+				log.Debugf("Ignored produce: %+v", ev)
 			}
 		}
 	}()
-	log.Info("Number of golayed messages on topic | ", len(isDelivered))
+	log.Infof("Number of golayed messages on topic: %v", len(isDelivered))
 	ScanTopic(deliverMsg)
 
 	// Wait for message deliveries before shutting down
@@ -55,7 +54,7 @@ func HandleDeliveries() {
 func deliverMsg(msg *kafka.Message) {
 	if delay, delivered, _, gohlayed := common.ParseHeaders(msg.Headers); gohlayed && !delivered {
 		deliveryKey := common.FmtKafkaKey(msg.TopicPartition.Offset, delay)
-		log.Debug("Found deliverable message | ", fmt.Sprintf("%d-%s %s", msg.TopicPartition.Offset, msg.Key, deliveryKey))
+		log.Debugf("Found deliverable message: %d-%s %s", msg.TopicPartition.Offset, msg.Key, deliveryKey)
 		if delivered, exists := isDelivered[deliveryKey]; exists && !delivered {
 			var headers = []kafka.Header{}
 
@@ -80,9 +79,9 @@ func deliverMsg(msg *kafka.Message) {
 				Headers:        headers,
 			}
 			producer.Produce(deliveryMsg, nil)
-			log.Info("Delivered message | ", fmt.Sprintf("%s %s", deliveryMsg.Key, deliveryKey))
+			log.Infof("Delivered message: %s %s", deliveryMsg.Key, deliveryKey)
 		} else if delivered {
-			log.Debug("Message already delivered | ", fmt.Sprintf("%d-%s %s", msg.TopicPartition.Offset, msg.Key, deliveryKey))
+			log.Debugf("Message already delivered: %d-%s %s", msg.TopicPartition.Offset, msg.Key, deliveryKey)
 		}
 	}
 }
