@@ -14,6 +14,16 @@ Run the [Quickstart](./examples/quickstart/) compose example to see Gohlay in ac
 wget -qO- https://github.com/vordimous/gohlay/releases/latest/download/startup.sh | sh -
 ```
 
+## Install
+
+Download the binary for your OS from the [latest Gohlay release](https://github.com/vordimous/gohlay/releases/latest).
+
+Run Gohlay in a container:
+
+```bash
+docker run --rm ghcr.io/vordimous/gohlay --help
+```
+
 ## Roadmap
 
 - [X] Config with flags, yaml, and Environment vars

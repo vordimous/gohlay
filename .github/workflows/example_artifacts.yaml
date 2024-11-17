@@ -15,7 +15,8 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Tar all examples
-        run: for i in examples/*/; do tar -zcvf "${i%/}.tar.gz" "$i"; done
+        working-directory: ./examples
+        run: for i in */; do tar -zcvf "${i%/}.tar.gz" "$i"; done
 
       - name: Release
         uses: softprops/action-gh-release@v2
