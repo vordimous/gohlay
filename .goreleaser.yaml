@@ -27,7 +27,6 @@ builds:
       - -linkmode external
       - -s -w -X main.version={{ .Version }}
 
-
 archives:
   - format: tar.gz
     # this name template makes the OS and Arch compatible with the results of `uname`.

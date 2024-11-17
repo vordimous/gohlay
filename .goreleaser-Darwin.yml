@@ -5,38 +5,22 @@ env:
 
 before:
   hooks:
+    - go mod tidy
     - go mod download
 builds:
 
-  - id: darwin-amd64
-    goos:
+  - goos:
       - darwin
     goarch:
       - amd64
+      - arm64
     env:
       - CGO_ENABLED=1
-#      - CC=o64-clang
-#      - CXX=o64-clang++
     flags:
       - -trimpath
     ldflags:
       - -linkmode external
       - -s -w -X main.version={{ .Version }}
-
-  - id: darwin-arm64
-    goarch:
-      - arm64
-    goos:
-      - darwin
-    env:
-      - CGO_ENABLED=1
-#      - CC=oa64-clang
-#      - CXX=oa64-clang++
-    flags:
-      - -trimpath
-    ldflags:
-      - -s -w -X main.version={{ .Version }}
-
 
 archives:
   - files:
