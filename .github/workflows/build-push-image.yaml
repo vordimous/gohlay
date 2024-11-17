@@ -2,6 +2,9 @@ name: Extra container builder
 
 on:
   push:
+    branches:
+      - main
+  pull_request:
 
 
 jobs:

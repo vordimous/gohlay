@@ -2,6 +2,10 @@ name: Check build and release
 
 on:
   push:
+    branches:
+      - main
+  pull_request:
+
 
 jobs:
 
