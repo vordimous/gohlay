@@ -5,61 +5,11 @@ on:
 
 jobs:
 
-  staticcheck:
-    runs-on: ubuntu-latest
-    steps:
-
-      - name: Checkout code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-
-      - name: Set up Go
-        uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5
-        with:
-          go-version: 1.23
-          cache: true
-
-      - name: Static check
-        uses: dominikh/staticcheck-action@fe1dd0c3658873b46f8c9bb3291096a617310ca6 # v1.3.1
-        with:
-          version: "2024.1"
-          install-go: false
-          cache-key: 1.23
-
-
-  builds:
-    timeout-minutes: 20
-    strategy:
-      matrix:
-        go-version: [ 1.23 ]
-        os: [ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
-    name: build (${{ matrix.os }})
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ matrix.go-version }}
-
-      - name: Create temporary .env
-        run: touch .env
-
-      - name: Build [go${{ matrix.go-version }} - ${{ matrix.os }}]
-        run: make build
-
   release-binaries:
-    if: github.ref_type == 'tag'
     strategy:
       matrix:
         go-version: [ 1.23 ]
-        os: [ ubuntu-latest]
-    needs: [ builds ]
-    runs-on:  ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         id: checkout
@@ -78,10 +28,10 @@ jobs:
           		-v `pwd`:/go/src/$(PACKAGE_NAME) \
           		-w /go/src/$(PACKAGE_NAME) \
           		ghcr.io/goreleaser/goreleaser-cross:${GOLANG_CROSS_VERSION} \
-          		--clean --config .goreleaser-Linux.yml
+          		--clean --snapshot --config .goreleaser-Linux.yml
         env:
-          PACKAGE_NAME: github.com/AndriyKalashnykov/go-kafka-confluent-examples
-          GOLANG_CROSS_VERSION: v1.23
+          PACKAGE_NAME: github.com/vordimous/gohlay
+          GOLANG_CROSS_VERSION: v${{ matrix.go-version }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run GoReleaser MacOS
@@ -95,8 +45,8 @@ jobs:
           		-v `pwd`:/go/src/$(PACKAGE_NAME) \
           		-w /go/src/$(PACKAGE_NAME) \
           		ghcr.io/goreleaser/goreleaser-cross:${GOLANG_CROSS_VERSION} \
-          		--clean --config .goreleaser-Darwin-cross.yml
+          		--clean --snapshot --config .goreleaser-Darwin-cross.yml
         env:
-          PACKAGE_NAME: github.com/AndriyKalashnykov/go-kafka-confluent-examples
-          GOLANG_CROSS_VERSION: v1.23
+          PACKAGE_NAME: github.com/vordimous/gohlay
+          GOLANG_CROSS_VERSION: v${{ matrix.go-version }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
