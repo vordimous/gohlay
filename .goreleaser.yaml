@@ -21,6 +21,11 @@ builds:
     goarch:
       - amd64
       - arm64
+    ignore:
+      - goos: darwin
+        goarch: '386'
+      - goos: linux
+        goarch: arm
     env:
       - CGO_ENABLED=1
     flags:
