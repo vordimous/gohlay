@@ -18,15 +18,18 @@ before:
 builds:
   - env:
       - CGO_ENABLED=1
+      - CC=oa64-clang
+      - CXX=oa64-clang++
     ldflags:
       - -linkmode external
       - -extldflags "-static"
     tags:
      - musl
     goos:
-      - linux
-      # - windows
-      # - darwin
+      # - linux
+      # - freebsd
+      - darwin
+
 
 archives:
   - format: tar.gz
