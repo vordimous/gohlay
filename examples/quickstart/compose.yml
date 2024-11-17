@@ -7,8 +7,11 @@ services:
     depends_on:
       kafka-data-init:
         condition: service_completed_successfully
-    command: |
-      run -v -b kafka:29092 -t gohlay
+    environment:
+      GOHLAY_BOOTSTRAP_SERVERS: kafka:29092
+      GOHLAY_TOPICS: gohlay
+      GOHLAY_VERBOSE: true
+    command: run
 
   kafka:
     image: bitnami/kafka:3.9

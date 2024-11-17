@@ -33,7 +33,7 @@ func setupLogging() {
 	if viper.GetBool("silent") {
 		logLevel = log.PanicLevel
 	}
-	log.Debug("Setting log Level | ", logLevel)
+	log.Debugf("Setting log Level %v", logLevel)
 	log.SetLevel(logLevel)
 }
 
@@ -45,7 +45,7 @@ func readConfig() {
 	viper.AddConfigPath(viper.GetString("config_dir"))
 	err := viper.ReadInConfig()
 	if err != nil {
-		log.Info(err)
+		log.Infof("Optional %v", err)
 	}
 }
 

@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"fmt"
 	"maps"
 	"slices"
 
@@ -37,19 +36,19 @@ func indexMsg(msg *kafka.Message) {
 	deliveryTime, delivered, deliveredKey, hasHeader := common.ParseHeaders(msg.Headers)
 	if hasHeader {
 		if !delivered && deliveryTime != 0 {
-			log.Debug("Message time remaining | ", deliveryTime - deadline)
+			log.Debugf("Message time remaining: %v", deliveryTime - deadline)
 			if deliveryTime < deadline {
 				deliveryKey := common.FmtKafkaKey(msg.TopicPartition.Offset, deliveryTime)
 				isDelivered[deliveryKey] = false // set key to be delivered with a delivery value of false
-				log.Debug("Setting message for delivery | ", fmt.Sprintf("%d-%s %s", msg.TopicPartition.Offset, msg.Key, deliveryKey))
+				log.Debugf("Setting message for delivery: %d-%s %s", msg.TopicPartition.Offset, msg.Key, deliveryKey)
 			} else {
-				log.Debug("Message not ready for delivery | ", fmt.Sprintf("%d-%s", msg.TopicPartition.Offset, msg.Key) )
+				log.Debugf("Message not ready for delivery: %d-%s", msg.TopicPartition.Offset, msg.Key)
 			}
 		} else if delivered {
 			delete(isDelivered, deliveredKey)
-			log.Debug("Message is already delivered | ", fmt.Sprintf("%d-%s %s", msg.TopicPartition.Offset, msg.Key, deliveredKey))
+			log.Debugf("Message is already delivered: %d-%s %s", msg.TopicPartition.Offset, msg.Key, deliveredKey)
 		}
 	} else {
-		log.Debug("Messaged is not gohlayed | ", fmt.Sprintf("%d-%s", msg.TopicPartition.Offset, msg.Key) )
+		log.Debugf("Messaged is not gohlayed: %d-%s", msg.TopicPartition.Offset, msg.Key)
 	}
 }

@@ -1,0 +1,96 @@
+version: 2
+
+env:
+  - GO111MODULE=on
+
+before:
+  hooks:
+    - go mod tidy
+    - go mod download
+builds:
+
+  - id: linux-amd64
+    goos:
+      - linux
+    goarch:
+      - amd64
+    env:
+      - CGO_ENABLED=1
+      - CC=x86_64-linux-gnu-gcc
+      - CXX=x86_64-linux-gnu-g++
+    flags:
+      - -trimpath
+    ldflags:
+      - -linkmode external
+      - -extldflags "-lc -lrt -lpthread --static"
+      - -s -w -X main.version={{ .Version }}
+
+  - id: linux-arm64
+    goarch:
+      - arm64
+    goos:
+      - linux
+    env:
+      - CGO_ENABLED=1
+      - CC=aarch64-linux-gnu-gcc
+      - CXX=aarch64-linux-gnu-g++
+    flags:
+      - -trimpath
+    ldflags:
+      - -linkmode external
+      - -extldflags "-lc -lrt -lpthread --static"
+      - -s -w -X main.version={{ .Version }}
+
+  - id: windows-amd64
+    goarch:
+      - amd64
+    goos:
+      - windows
+    env:
+      - CGO_ENABLED=1
+      - CGO_LDFLAGS=-fstack-protector
+      - CC=x86_64-w64-mingw32-gcc
+      - CXX=x86_64-w64-mingw32-g++
+    flags:
+      - -trimpath
+      - -buildmode=exe
+
+archives:
+  - files:
+      - README.md
+    format_overrides:
+      - format: zip
+        goos: windows
+    id: gohlay
+    name_template: "{{ .ProjectName }}_v{{ .Version }}_{{ .Os }}_{{ .Arch }}{{if .Arm}}_{{.Arm}}{{end}}"
+
+checksum:
+  name_template: "checksums-linux.txt"
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+    - '^test:'
+    - '^chore'
+    - 'merge conflict'
+    - Merge pull request
+    - Merge remote-tracking branch
+    - Merge branch
+    - go mod tidy
+  groups:
+    - title: Dependency updates
+      regexp: '^.*?(feat|fix)\(deps\)!?:.+$'
+      order: 300
+    - title: 'New Features'
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 100
+    - title: 'Bug fixes'
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 200
+    - title: 'Documentation updates'
+      regexp: ^.*?doc(\([[:word:]]+\))??!?:.+$
+      order: 400
+    - title: Other work
+      order: 9999

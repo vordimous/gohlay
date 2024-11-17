@@ -1,0 +1,49 @@
+name: Check build and release
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+
+jobs:
+
+  release-binaries:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check GoReleaser Linux
+        run: |
+          docker run \
+          		--rm \
+          		--privileged \
+          		-e CGO_ENABLED=1 \
+          		-e GITHUB_TOKEN \
+          		-v /var/run/docker.sock:/var/run/docker.sock \
+          		-v `pwd`:/go/src/gohlay \
+          		-w /go/src/gohlay \
+          		ghcr.io/goreleaser/goreleaser-cross:v1.23 \
+          		--clean --skip=validate --skip=publish --config .goreleaser-Linux.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check GoReleaser MacOS
+        run: |
+          docker run \
+          		--rm \
+          		--privileged \
+          		-e CGO_ENABLED=1 \
+          		-e GITHUB_TOKEN \
+          		-v /var/run/docker.sock:/var/run/docker.sock \
+          		-v `pwd`:/go/src/gohlay \
+          		-w /go/src/gohlay \
+          		ghcr.io/goreleaser/goreleaser-cross:v1.23 \
+          		--clean --skip=validate --skip=publish --config .goreleaser-Darwin-cross.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
