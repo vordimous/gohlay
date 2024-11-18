@@ -25,7 +25,7 @@ func HandleDeliveries() {
 	didD := 0
 	defer func() {
 		producer.Close()
-		log.Infof("Number of golayed messages delivered: %v", didD)
+		log.Infof("Number of gohlayed messages delivered: %v", didD)
 	}()
 	// Delivery report handler for produced messages
 	go func() {
@@ -42,19 +42,20 @@ func HandleDeliveries() {
 			}
 		}
 	}()
-	log.Infof("Number of golayed messages on topic: %v", len(isDelivered))
-	ScanTopic(deliverMsg)
+	log.Infof("Number of gohlayed messages on topic: %v", len(isDelivered))
+
+	ScanAll(deliverMsg)
 
 	// Wait for message deliveries before shutting down
 	for pending := 1; pending > 0; pending = producer.Flush(1000) {
-		log.Debug("Waiting for message remaining deliveries")
+		log.Debug("Waiting for remaining deliveries")
 	}
 }
 
 func deliverMsg(msg *kafka.Message) {
 	if delay, delivered, _, gohlayed := common.ParseHeaders(msg.Headers); gohlayed && !delivered {
 		deliveryKey := common.FmtKafkaKey(msg.TopicPartition.Offset, delay)
-		log.Debugf("Found deliverable message: %d-%s %s", msg.TopicPartition.Offset, msg.Key, deliveryKey)
+		log.Debugf("Found deliverable message: %d %d-%s %s", msg.TopicPartition.Partition, msg.TopicPartition.Offset, msg.Key, deliveryKey)
 		if delivered, exists := isDelivered[deliveryKey]; exists && !delivered {
 			var headers = []kafka.Header{}
 

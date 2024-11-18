@@ -26,9 +26,16 @@ func init() {
 	maxOffset, _ = kafka.NewOffset(math.MaxInt64)
 }
 
-// ScanTopic creates a unique consumer that reads all messages on the topics
-func ScanTopic(handleMessage func(*kafka.Message)) {
-	topicConfigMap, topics := config.GetConsumer()
+// ScanAll creates a unique consumer that reads all messages on the topics
+func ScanAll(handleMessage func(*kafka.Message)) {
+	for _, topic := range config.GetTopics() {
+		scanTopic(topic, handleMessage)
+    }
+}
+
+// scanTopic creates a unique consumer that reads all messages on the topics
+func scanTopic(topic string, handleMessage func(*kafka.Message)) {
+	topicConfigMap := config.GetConsumer()
 	group := fmt.Sprintf("group.id=%d-%d", viper.GetInt64("deadline"), len(isDelivered))
 	topicConfigMap.Set(group)
 	log.Debugf("Scanning with %+v", topicConfigMap)
@@ -37,10 +44,28 @@ func ScanTopic(handleMessage func(*kafka.Message)) {
 		log.Fatal("Failed to create consumer ", err)
 		os.Exit(1)
 	}
-	if err := c.SubscribeTopics(topics, nil); err != nil {
+
+	partitions := []int32{}
+	if metadata, err :=c.GetMetadata(&topic, false, 100); err != nil {
+		log.Warning("Failed to get Partitions, using partition 0", err)
+		partitions = append(partitions, 0)
+	} else {
+		for _, p := range metadata.Topics[topic].Partitions {
+			partitions = append(partitions, p.ID)
+		}
+	}
+	topicPartitions := []kafka.TopicPartition{}
+	for _, partition := range partitions {
+		topicPartitions = append(topicPartitions, kafka.TopicPartition{
+			Topic: &topic,
+			Partition: partition,
+		})
+	}
+	if err := c.Assign(topicPartitions); err != nil {
 		log.Fatal("Failed subscribe ", err)
 		os.Exit(1)
 	}
+	log.Debugf("Scanning %d Partitions: %+v", len(topicPartitions), partitions)
 
 	defer func() {
 		c.Close()
@@ -75,10 +100,10 @@ func ScanTopic(handleMessage func(*kafka.Message)) {
 				}
 			case kafka.PartitionEOF:
 				maxOffset = e.Offset
-				log.Debugf("%% Reached maxOffset: %v %v", maxOffset, e)
+				log.Debugf("%% Reached maxOffset: %v %v %+v", maxOffset, e.Partition, e)
 				run = false
 			case kafka.RevokedPartitions:
-				log.Infof("%% Revoked: %v", e)
+				log.Debugf("%% Revoked: %v", e)
 				run = false
 			case kafka.Error:
 				log.Errorf("%% Error: %v", e)

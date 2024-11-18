@@ -1,6 +1,3 @@
-/*
-Copyright © 2024 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
@@ -69,11 +66,6 @@ func init() {
 	viper.BindPFlag("bootstrap_servers", rootCmd.PersistentFlags().Lookup("bootstrap_servers"))
 	rootCmd.PersistentFlags().StringArrayVarP(&Topics, "topics", "t", []string{"gohlay"}, "Sets the kafka topics to use")
 	viper.BindPFlag("topics", rootCmd.PersistentFlags().Lookup("topics"))
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
 }
 
 

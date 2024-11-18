@@ -20,7 +20,7 @@ func init() {
 
 // CheckForDeliveries will scan the topic and build a map of messages to be delivered
 func CheckForDeliveries() {
-	ScanTopic(indexMsg)
+	ScanAll(indexMsg)
 }
 
 // GetDeliveries creates an array of strings from the deliveries map keys
@@ -40,7 +40,7 @@ func indexMsg(msg *kafka.Message) {
 			if deliveryTime < deadline {
 				deliveryKey := common.FmtKafkaKey(msg.TopicPartition.Offset, deliveryTime)
 				isDelivered[deliveryKey] = false // set key to be delivered with a delivery value of false
-				log.Debugf("Setting message for delivery: %d-%s %s", msg.TopicPartition.Offset, msg.Key, deliveryKey)
+				log.Debugf("Setting message for delivery: %d %d-%s %s", msg.TopicPartition.Partition, msg.TopicPartition.Offset, msg.Key, deliveryKey)
 			} else {
 				log.Debugf("Message not ready for delivery: %d-%s", msg.TopicPartition.Offset, msg.Key)
 			}

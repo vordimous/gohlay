@@ -26,6 +26,10 @@ COPY . .
 RUN go build -ldflags '-linkmode external -extldflags "-static"' -tags musl -o /gohlay .
 RUN xx-verify /gohlay
 
+# Run the tests in the container
+FROM build-stage AS run-test-stage
+RUN go test -v ./...
+
 # Deploy the application binary into a lean image
 FROM gcr.io/distroless/base-debian11 AS build-release-stage
 
