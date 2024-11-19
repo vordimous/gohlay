@@ -79,7 +79,7 @@ func deliverMsg(msg *kafka.Message) {
 				Opaque:         msg.Opaque,
 				Headers:        headers,
 			}
-			// producer.Produce(deliveryMsg, nil)
+			producer.Produce(deliveryMsg, nil)
 			log.Infof("Delivered message: %s %s", deliveryMsg.Key, messageId)
 		} else if delivered {
 			log.Debugf("Message already delivered: %d-%s %s", msg.TopicPartition.Offset, msg.Key, messageId)

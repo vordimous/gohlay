@@ -39,28 +39,3 @@ func ParseHeaders(headers []kafka.Header) (deliveryTime int64, isDelivered bool,
 	}
 	return
 }
-
-// GetAssignedPartitions finds the assigned partitions
-func GetAssignedPartitions(c *kafka.Consumer, partitions []kafka.TopicPartition) ([]kafka.TopicPartition, error) {
-	parts := make([]kafka.TopicPartition, len(partitions))
-	var err error
-	if false {
-		limit := time.Now().Add(time.Duration(-5)*time.Minute).UnixNano() / int64(time.Millisecond)
-		for i, tp := range partitions {
-			offset, _ := kafka.NewOffset(limit)
-			tp.Offset = offset
-			log.Debugf("GetAssignedPartitions offset query time %v", tp.Offset)
-			parts[i] = tp
-		}
-		parts, err = c.OffsetsForTimes(parts, 10000)
-	} else {
-		for i, tp := range partitions {
-			offset, _ := kafka.NewOffset(0)
-			tp.Offset = offset
-			log.Infof("GetAssignedPartitions offset query value %v", tp.Offset)
-			parts[i] = tp
-		}
-	}
-	log.Infof("Assigned partition(s) %v", parts)
-	return parts, err
-}
