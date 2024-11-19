@@ -25,7 +25,7 @@ func HandleDeliveries() {
 	didD := 0
 	defer func() {
 		producer.Close()
-		log.Infof("Number of golayed messages delivered: %v", didD)
+		log.Infof("Number of gohlayed messages delivered: %v", didD)
 	}()
 	// Delivery report handler for produced messages
 	go func() {
@@ -42,20 +42,21 @@ func HandleDeliveries() {
 			}
 		}
 	}()
-	log.Infof("Number of golayed messages on topic: %v", len(isDelivered))
-	ScanTopic(deliverMsg)
+	log.Infof("Number of gohlayed messages on topic: %v", len(isDelivered))
+
+	ScanAll("deliver", deliverMsg)
 
 	// Wait for message deliveries before shutting down
 	for pending := 1; pending > 0; pending = producer.Flush(1000) {
-		log.Debug("Waiting for message remaining deliveries")
+		log.Debug("Waiting for remaining deliveries")
 	}
 }
 
 func deliverMsg(msg *kafka.Message) {
 	if delay, delivered, _, gohlayed := common.ParseHeaders(msg.Headers); gohlayed && !delivered {
-		deliveryKey := common.FmtKafkaKey(msg.TopicPartition.Offset, delay)
-		log.Debugf("Found deliverable message: %d-%s %s", msg.TopicPartition.Offset, msg.Key, deliveryKey)
-		if delivered, exists := isDelivered[deliveryKey]; exists && !delivered {
+		messageId := common.FmtMessageId(msg.TopicPartition.Offset, delay)
+		log.Debugf("Found deliverable message: %d %d-%s %s", msg.TopicPartition.Partition, msg.TopicPartition.Offset, msg.Key, messageId)
+		if delivered, exists := isDelivered[messageId]; exists && !delivered {
 			var headers = []kafka.Header{}
 
 			// replace the deadline header with the delivered header
@@ -64,7 +65,7 @@ func deliverMsg(msg *kafka.Message) {
 					headers = append(headers,
 						kafka.Header{
 							Key:   "GOHLAY_DELIVERED",
-							Value: []byte(deliveryKey),
+							Value: []byte(messageId),
 						})
 				} else {
 					headers = append(headers, h)
@@ -79,9 +80,9 @@ func deliverMsg(msg *kafka.Message) {
 				Headers:        headers,
 			}
 			producer.Produce(deliveryMsg, nil)
-			log.Infof("Delivered message: %s %s", deliveryMsg.Key, deliveryKey)
+			log.Infof("Delivered message: %s %s", deliveryMsg.Key, messageId)
 		} else if delivered {
-			log.Debugf("Message already delivered: %d-%s %s", msg.TopicPartition.Offset, msg.Key, deliveryKey)
+			log.Debugf("Message already delivered: %d-%s %s", msg.TopicPartition.Offset, msg.Key, messageId)
 		}
 	}
 }

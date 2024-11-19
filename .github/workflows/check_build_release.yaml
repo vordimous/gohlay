@@ -9,7 +9,19 @@ on:
 
 jobs:
 
-  release-binaries:
+  check-docker-build-with-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run docker build with tests
+        run: docker build -t docker-gohlay-test --progress plain --no-cache --target run-test-stage .
+
+  check-release-binaries:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

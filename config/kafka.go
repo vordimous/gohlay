@@ -18,7 +18,16 @@ func getBootrapServersString() (string) {
 }
 
 // GetConsumer creates the kafka.ConfigMap based on the configured settings for a Consumer
-func GetConsumer() (config *kafka.ConfigMap, topics []string) {
+func GetTopics() (topics []string) {
+	topics = viper.GetStringSlice("topics")
+	if len(topics) == 0 {
+		log.Error("No topics defined")
+	}
+	return
+}
+
+// GetConsumer creates the kafka.ConfigMap based on the configured settings for a Consumer
+func GetConsumer() (config *kafka.ConfigMap) {
 	config = &kafka.ConfigMap{
 		"bootstrap.servers":               getBootrapServersString(),
 		"go.application.rebalance.enable": true, // delegate Assign() responsibility to app
@@ -26,7 +35,6 @@ func GetConsumer() (config *kafka.ConfigMap, topics []string) {
 		"enable.partition.eof":            true,
 		"default.topic.config":            kafka.ConfigMap{"auto.offset.reset": "earliest"},
 	}
-	topics = viper.GetStringSlice("topics")
 	log.Debugf("Kafka consumer config: %+v", config)
 	return
 }

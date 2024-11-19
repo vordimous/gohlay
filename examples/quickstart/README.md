@@ -12,7 +12,7 @@ This quickstart will demonstrate how producers can send delayed messages using t
 
 Kafka is setup and the Gohlay service has executed once and did not find any gohlayed messages.
 
-- Two golayed messages have been producted onto the `gohlay` topic. One message was scheduled to be sent immediately and one message was set to be delivered in the future. Delivered messages will replace the Gohlay header with a delivery header
+- Two gohlayed messages have been producted onto the `gohlay` topic. One message was scheduled to be sent immediately and one message was set to be delivered in the future. Delivered messages will replace the Gohlay header with a delivery header
 - Check the [Kafka UI](http://localhost:8080/ui/clusters/local/all-topics/gohlay/messages) for your waiting messages. will see the the `now` message has a second message and the `future` message only has one.
 - The gohlay service is auto restarting to run new checks for delayed messages.
 - Wait for the `future` messages delay time to pass and you will see the second delayed message after refreshing the [Kafka UI](http://localhost:8080/ui/clusters/local/all-topics/gohlay/messages).
