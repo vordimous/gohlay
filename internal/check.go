@@ -20,7 +20,7 @@ func init() {
 
 // CheckForDeliveries will scan the topic and build a map of messages to be delivered
 func CheckForDeliveries() {
-	ScanAll(indexMsg)
+	ScanAll("index", indexMsg)
 }
 
 // GetDeliveries creates an array of strings from the deliveries map keys

@@ -44,7 +44,7 @@ func HandleDeliveries() {
 	}()
 	log.Infof("Number of gohlayed messages on topic: %v", len(isDelivered))
 
-	ScanAll(deliverMsg)
+	ScanAll("deliver", deliverMsg)
 
 	// Wait for message deliveries before shutting down
 	for pending := 1; pending > 0; pending = producer.Flush(1000) {

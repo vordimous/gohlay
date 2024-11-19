@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"fmt"
 	"math"
 	"os"
 	"os/signal"
@@ -9,7 +8,6 @@ import (
 
 	kafka "github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"github.com/vordimous/gohlay/common"
 	"github.com/vordimous/gohlay/config"
 )
@@ -27,22 +25,28 @@ func init() {
 }
 
 // ScanAll creates a unique consumer that reads all messages on the topics
-func ScanAll(handleMessage func(*kafka.Message)) {
+func ScanAll(reason string, handleMessage func(*kafka.Message)) {
 	for _, topic := range config.GetTopics() {
-		scanTopic(topic, handleMessage)
+		scanTopic(topic, reason, handleMessage)
     }
 }
 
 // scanTopic creates a unique consumer that reads all messages on the topics
-func scanTopic(topic string, handleMessage func(*kafka.Message)) {
+func scanTopic(topic string, reason string, handleMessage func(*kafka.Message)) {
+
 	topicConfigMap := config.GetConsumer()
-	topicConfigMap.Set(common.FmtKafkaGroup(topic))
+	if err := topicConfigMap.Set(common.FmtKafkaGroup(reason, topic)); err != nil {
+		log.Fatalf("Failed to set the consumer groupId %v", err)
+		os.Exit(1)
+	}
+
 	log.Debugf("Scanning with %+v", topicConfigMap)
 	c, err := kafka.NewConsumer(topicConfigMap)
 	if err != nil {
 		log.Fatal("Failed to create consumer ", err)
 		os.Exit(1)
 	}
+
 	defer func() {
 		log.Debugf("Closing consumer %+v", topicConfigMap)
 		c.Close()
@@ -70,12 +74,6 @@ func scanTopic(topic string, handleMessage func(*kafka.Message)) {
 	}
 	log.Debugf("Scanning %d Partitions: %+v", len(topicPartitions), partitions)
 
-	// if err := c.Subscribe(topic, nil); err != nil {
-	// 	log.Fatal("Failed subscribe ", err)
-	// 	os.Exit(1)
-	// }
-
-
 	run := true
 	for run {
 		select {
@@ -89,14 +87,6 @@ func scanTopic(topic string, handleMessage func(*kafka.Message)) {
 			}
 
 			switch e := ev.(type) {
-			case kafka.AssignedPartitions:
-				log.Debugf("AssignedPartitions: %v", e)
-				parts, err := common.GetAssignedPartitions(c, e.Partitions)
-				if err != nil {
-					log.Fatalf("Failed to get offset: %v", err)
-					os.Exit(1)
-				}
-				c.Assign(parts)
 			case *kafka.Message:
 				if e.TopicPartition.Offset < maxOffset {
 					handleMessage(e)

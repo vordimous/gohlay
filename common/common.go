@@ -15,8 +15,8 @@ func FmtMessageId(offset kafka.Offset, delay int64) string {
 }
 
 // FmtKafkaGroup formats a group id
-func FmtKafkaGroup(topic string, deadline int64) string {
-	return fmt.Sprintf("%s:%d", topic, viper.GetInt64("deadline"))
+func FmtKafkaGroup(reason string, topic string) string {
+	return fmt.Sprintf("group.id=gohlay_%s:%s:%d", reason, topic, viper.GetInt64("deadline"))
 }
 
 // ParseHeaders extracts relevant information from the message headers
