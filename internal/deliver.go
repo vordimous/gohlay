@@ -54,9 +54,9 @@ func HandleDeliveries() {
 
 func deliverMsg(msg *kafka.Message) {
 	if delay, delivered, _, gohlayed := common.ParseHeaders(msg.Headers); gohlayed && !delivered {
-		deliveryKey := common.FmtKafkaKey(msg.TopicPartition.Offset, delay)
-		log.Debugf("Found deliverable message: %d %d-%s %s", msg.TopicPartition.Partition, msg.TopicPartition.Offset, msg.Key, deliveryKey)
-		if delivered, exists := isDelivered[deliveryKey]; exists && !delivered {
+		messageId := common.FmtMessageId(msg.TopicPartition.Offset, delay)
+		log.Debugf("Found deliverable message: %d %d-%s %s", msg.TopicPartition.Partition, msg.TopicPartition.Offset, msg.Key, messageId)
+		if delivered, exists := isDelivered[messageId]; exists && !delivered {
 			var headers = []kafka.Header{}
 
 			// replace the deadline header with the delivered header
@@ -65,7 +65,7 @@ func deliverMsg(msg *kafka.Message) {
 					headers = append(headers,
 						kafka.Header{
 							Key:   "GOHLAY_DELIVERED",
-							Value: []byte(deliveryKey),
+							Value: []byte(messageId),
 						})
 				} else {
 					headers = append(headers, h)
@@ -79,10 +79,10 @@ func deliverMsg(msg *kafka.Message) {
 				Opaque:         msg.Opaque,
 				Headers:        headers,
 			}
-			producer.Produce(deliveryMsg, nil)
-			log.Infof("Delivered message: %s %s", deliveryMsg.Key, deliveryKey)
+			// producer.Produce(deliveryMsg, nil)
+			log.Infof("Delivered message: %s %s", deliveryMsg.Key, messageId)
 		} else if delivered {
-			log.Debugf("Message already delivered: %d-%s %s", msg.TopicPartition.Offset, msg.Key, deliveryKey)
+			log.Debugf("Message already delivered: %d-%s %s", msg.TopicPartition.Offset, msg.Key, messageId)
 		}
 	}
 }

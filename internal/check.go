@@ -38,9 +38,9 @@ func indexMsg(msg *kafka.Message) {
 		if !delivered && deliveryTime != 0 {
 			log.Debugf("Message time remaining: %v", deliveryTime - deadline)
 			if deliveryTime < deadline {
-				deliveryKey := common.FmtKafkaKey(msg.TopicPartition.Offset, deliveryTime)
-				isDelivered[deliveryKey] = false // set key to be delivered with a delivery value of false
-				log.Debugf("Setting message for delivery: %d %d-%s %s", msg.TopicPartition.Partition, msg.TopicPartition.Offset, msg.Key, deliveryKey)
+				messageId := common.FmtMessageId(msg.TopicPartition.Offset, deliveryTime)
+				isDelivered[messageId] = false // set key to be delivered with a delivery value of false
+				log.Debugf("Setting message for delivery: %d %d-%s %s", msg.TopicPartition.Partition, msg.TopicPartition.Offset, msg.Key, messageId)
 			} else {
 				log.Debugf("Message not ready for delivery: %d-%s", msg.TopicPartition.Offset, msg.Key)
 			}

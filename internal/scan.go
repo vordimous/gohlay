@@ -36,14 +36,17 @@ func ScanAll(handleMessage func(*kafka.Message)) {
 // scanTopic creates a unique consumer that reads all messages on the topics
 func scanTopic(topic string, handleMessage func(*kafka.Message)) {
 	topicConfigMap := config.GetConsumer()
-	group := fmt.Sprintf("group.id=%d-%d", viper.GetInt64("deadline"), len(isDelivered))
-	topicConfigMap.Set(group)
+	topicConfigMap.Set(common.FmtKafkaGroup(topic))
 	log.Debugf("Scanning with %+v", topicConfigMap)
 	c, err := kafka.NewConsumer(topicConfigMap)
 	if err != nil {
 		log.Fatal("Failed to create consumer ", err)
 		os.Exit(1)
 	}
+	defer func() {
+		log.Debugf("Closing consumer %+v", topicConfigMap)
+		c.Close()
+	}()
 
 	partitions := []int32{}
 	if metadata, err :=c.GetMetadata(&topic, false, 100); err != nil {
@@ -67,9 +70,11 @@ func scanTopic(topic string, handleMessage func(*kafka.Message)) {
 	}
 	log.Debugf("Scanning %d Partitions: %+v", len(topicPartitions), partitions)
 
-	defer func() {
-		c.Close()
-	}()
+	// if err := c.Subscribe(topic, nil); err != nil {
+	// 	log.Fatal("Failed subscribe ", err)
+	// 	os.Exit(1)
+	// }
+
 
 	run := true
 	for run {

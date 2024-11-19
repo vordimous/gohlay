@@ -33,6 +33,7 @@ docker run --rm ghcr.io/vordimous/gohlay --help
 - [ ] configurable group id
 - [ ] Kafka SASL auth
 - [ ] Deliver to multiple topics
+- [ ] Use a configurable offset to start from
 - [ ] Deliver all message
 - [ ] Native CRON trigger
 - [ ] Tested Kafka 2.x and 3.x support

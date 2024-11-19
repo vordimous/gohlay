@@ -10,19 +10,19 @@ import (
 
 func Test_getBootrapServersString(t *testing.T) {
 	tests := []struct {
-		name string
-		want string
+		name              string
+		want              string
 		bootstrap_servers []string
 	}{
 		{
-			name: "Test single server",
+			name:              "Test single server",
 			bootstrap_servers: []string{"localhost:9092"},
-			want: "localhost:9092",
+			want:              "localhost:9092",
 		},
 		{
-			name: "Test multiple servers",
-			bootstrap_servers: []string{"localhost:9092","localhost:9093"},
-			want: "localhost:9092,localhost:9093",
+			name:              "Test multiple servers",
+			bootstrap_servers: []string{"localhost:9092", "localhost:9093"},
+			want:              "localhost:9092,localhost:9093",
 		},
 	}
 	for _, tt := range tests {
@@ -37,49 +37,39 @@ func Test_getBootrapServersString(t *testing.T) {
 
 func TestGetConsumer(t *testing.T) {
 	tests := []struct {
-		name       string
+		name              string
 		bootstrap_servers []string
-		topics []string
-		wantConfig *kafka.ConfigMap
-		wantTopics []string
+		wantConfig        *kafka.ConfigMap
 	}{
 		{
-			name: "Test single server and topic",
+			name:              "Test single server and topic",
 			bootstrap_servers: []string{"localhost:9092"},
-			topics: []string{"gohlay"},
 			wantConfig: &kafka.ConfigMap{
-				"bootstrap.servers":                "localhost:9092",
+				"bootstrap.servers":               "localhost:9092",
 				"go.application.rebalance.enable": true,
 				"session.timeout.ms":              6000,
 				"enable.partition.eof":            true,
 				"default.topic.config":            kafka.ConfigMap{"auto.offset.reset": "earliest"},
 			},
-			wantTopics: []string{"gohlay"},
 		},
 		{
-			name: "Test multiple servers and topics",
-			bootstrap_servers: []string{"localhost:9092","localhost:9093"},
-			topics: []string{"gohlay","gopher"},
+			name:              "Test multiple servers and topics",
+			bootstrap_servers: []string{"localhost:9092", "localhost:9093"},
 			wantConfig: &kafka.ConfigMap{
-				"bootstrap.servers":                "localhost:9092,localhost:9093",
+				"bootstrap.servers":               "localhost:9092,localhost:9093",
 				"go.application.rebalance.enable": true,
 				"session.timeout.ms":              6000,
 				"enable.partition.eof":            true,
 				"default.topic.config":            kafka.ConfigMap{"auto.offset.reset": "earliest"},
 			},
-			wantTopics: []string{"gohlay","gopher"},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			viper.Set("bootstrap_servers", tt.bootstrap_servers)
-			viper.Set("topics", tt.topics)
-			gotConfig, gotTopics := GetConsumer()
+			gotConfig := GetConsumer()
 			if !reflect.DeepEqual(gotConfig, tt.wantConfig) {
 				t.Errorf("GetConsumer() gotConfig = %v, want %v", gotConfig, tt.wantConfig)
-			}
-			if !reflect.DeepEqual(gotTopics, tt.wantTopics) {
-				t.Errorf("GetConsumer() gotTopics = %v, want %v", gotTopics, tt.wantTopics)
 			}
 		})
 	}
@@ -87,22 +77,22 @@ func TestGetConsumer(t *testing.T) {
 
 func TestGetProducer(t *testing.T) {
 	tests := []struct {
-		name       string
+		name              string
 		bootstrap_servers []string
-		wantConfig *kafka.ConfigMap
+		wantConfig        *kafka.ConfigMap
 	}{
 		{
-			name: "Test single server and topic",
+			name:              "Test single server and topic",
 			bootstrap_servers: []string{"localhost:9092"},
 			wantConfig: &kafka.ConfigMap{
-				"bootstrap.servers":                "localhost:9092",
+				"bootstrap.servers": "localhost:9092",
 			},
 		},
 		{
-			name: "Test multiple servers and topics",
-			bootstrap_servers: []string{"localhost:9092","localhost:9093"},
+			name:              "Test multiple servers and topics",
+			bootstrap_servers: []string{"localhost:9092", "localhost:9093"},
 			wantConfig: &kafka.ConfigMap{
-				"bootstrap.servers":                "localhost:9092,localhost:9093",
+				"bootstrap.servers": "localhost:9092,localhost:9093",
 			},
 		},
 	}

@@ -6,11 +6,17 @@ import (
 
 	kafka "github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
-// FmtKafkaKey generates a unique identifier
-func FmtKafkaKey(offset kafka.Offset, delay int64) string {
+// FmtMessageId formats a gohlayed message id
+func FmtMessageId(offset kafka.Offset, delay int64) string {
 	return fmt.Sprintf("%v-%d", offset, delay)
+}
+
+// FmtKafkaGroup formats a group id
+func FmtKafkaGroup(topic string, deadline int64) string {
+	return fmt.Sprintf("%s:%d", topic, viper.GetInt64("deadline"))
 }
 
 // ParseHeaders extracts relevant information from the message headers
