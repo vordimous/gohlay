@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"fmt"
 	"math"
 	"os"
 	"os/signal"
@@ -8,13 +9,13 @@ import (
 
 	kafka "github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	log "github.com/sirupsen/logrus"
-	"github.com/vordimous/gohlay/common"
 	"github.com/vordimous/gohlay/config"
+	"github.com/vordimous/gohlay/kafkautil"
 )
 
 var (
-	sigchan     chan os.Signal
-	maxOffset   kafka.Offset
+	sigchan   chan os.Signal
+	maxOffset kafka.Offset
 )
 
 func init() {
@@ -24,18 +25,23 @@ func init() {
 	maxOffset, _ = kafka.NewOffset(math.MaxInt64)
 }
 
+type MessageHandler interface {
+	GetReason() string
+	HandleMessage(*kafka.Message)
+}
+
 // ScanAll creates a unique consumer that reads all messages on the topics
-func ScanAll(reason string, handleMessage func(*kafka.Message)) {
+func ScanAll(handler MessageHandler) {
 	for _, topic := range config.GetTopics() {
-		scanTopic(topic, reason, handleMessage)
-    }
+		scanTopic(topic, handler)
+	}
 }
 
 // scanTopic creates a unique consumer that reads all messages on the topics
-func scanTopic(topic string, reason string, handleMessage func(*kafka.Message)) {
-
+func scanTopic(topic string, handler MessageHandler) {
 	topicConfigMap := config.GetConsumer()
-	if err := topicConfigMap.Set(common.FmtKafkaGroup(reason, topic)); err != nil {
+	fmt.Printf("handler: %+v", handler)
+	if err := topicConfigMap.Set(kafkautil.FmtKafkaGroup(handler.GetReason(), topic)); err != nil {
 		log.Fatalf("Failed to set the consumer groupId %v", err)
 		os.Exit(1)
 	}
@@ -53,7 +59,7 @@ func scanTopic(topic string, reason string, handleMessage func(*kafka.Message)) 
 	}()
 
 	partitions := []int32{}
-	if metadata, err :=c.GetMetadata(&topic, false, 100); err != nil {
+	if metadata, err := c.GetMetadata(&topic, false, 100); err != nil {
 		log.Warning("Failed to get Partitions, using partition 0", err)
 		partitions = append(partitions, 0)
 	} else {
@@ -64,7 +70,7 @@ func scanTopic(topic string, reason string, handleMessage func(*kafka.Message)) 
 	topicPartitions := []kafka.TopicPartition{}
 	for _, partition := range partitions {
 		topicPartitions = append(topicPartitions, kafka.TopicPartition{
-			Topic: &topic,
+			Topic:     &topic,
 			Partition: partition,
 		})
 	}
@@ -89,7 +95,7 @@ func scanTopic(topic string, reason string, handleMessage func(*kafka.Message)) 
 			switch e := ev.(type) {
 			case *kafka.Message:
 				if e.TopicPartition.Offset < maxOffset {
-					handleMessage(e)
+					handler.HandleMessage(e)
 				} else {
 					run = false
 				}
@@ -109,4 +115,3 @@ func scanTopic(topic string, reason string, handleMessage func(*kafka.Message)) 
 		}
 	}
 }
-

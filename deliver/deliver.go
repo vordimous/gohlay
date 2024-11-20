@@ -1,35 +1,51 @@
-package internal
+package deliver
 
 import (
 	"os"
 
 	kafka "github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	log "github.com/sirupsen/logrus"
-	"github.com/vordimous/gohlay/common"
 	"github.com/vordimous/gohlay/config"
-)
-
-var (
-	producer *kafka.Producer
+	"github.com/vordimous/gohlay/internal"
+	"github.com/vordimous/gohlay/kafkautil"
 )
 
 // HandleDeliveries produces the gohlayed kafka messages
-func HandleDeliveries() {
+func HandleDeliveries(deliveryKeys map[string]bool) {
+	d := &Deliverer{
+		reason: "delivering",
+		deliveryKeys: deliveryKeys,
+	}
 	p, err := kafka.NewProducer(config.GetProducer())
 	if err != nil {
 		log.Fatal("Failed to create producer ", err)
 		os.Exit(1)
 	}
-	producer = p
+	d.producer = p
+	d.doDeliveries()
+}
 
+
+type Deliverer struct {
+	reason string
+	deliveryKeys map[string]bool
+	producer *kafka.Producer
+}
+
+func (d *Deliverer) GetReason() string {
+	return d.reason
+}
+
+// HandleDeliveries produces the gohlayed kafka messages
+func (d *Deliverer) doDeliveries() {
 	didD := 0
 	defer func() {
-		producer.Close()
+		d.producer.Close()
 		log.Infof("Number of gohlayed messages delivered: %v", didD)
 	}()
 	// Delivery report handler for produced messages
 	go func() {
-		for e := range producer.Events() {
+		for e := range d.producer.Events() {
 			switch ev := e.(type) {
 			case *kafka.Message:
 				if ev.TopicPartition.Error != nil {
@@ -42,21 +58,21 @@ func HandleDeliveries() {
 			}
 		}
 	}()
-	log.Infof("Number of gohlayed messages on topic: %v", len(isDelivered))
+	log.Infof("Number of gohlayed messages on topic: %v", len(d.deliveryKeys))
 
-	ScanAll("deliver", deliverMsg)
+	internal.ScanAll(d)
 
 	// Wait for message deliveries before shutting down
-	for pending := 1; pending > 0; pending = producer.Flush(1000) {
+	for pending := 1; pending > 0; pending = d.producer.Flush(1000) {
 		log.Debug("Waiting for remaining deliveries")
 	}
 }
 
-func deliverMsg(msg *kafka.Message) {
-	if delay, delivered, _, gohlayed := common.ParseHeaders(msg.Headers); gohlayed && !delivered {
-		messageId := common.FmtMessageId(msg.TopicPartition.Offset, delay)
+func (d *Deliverer) HandleMessage(msg *kafka.Message) {
+	if delay, delivered, _, gohlayed := kafkautil.ParseHeaders(msg.Headers); gohlayed && !delivered {
+		messageId := kafkautil.FmtMessageId(msg.TopicPartition.Offset, delay)
 		log.Debugf("Found deliverable message: %d %d-%s %s", msg.TopicPartition.Partition, msg.TopicPartition.Offset, msg.Key, messageId)
-		if delivered, exists := isDelivered[messageId]; exists && !delivered {
+		if delivered, exists := d.deliveryKeys[messageId]; exists && !delivered {
 			var headers = []kafka.Header{}
 
 			// replace the deadline header with the delivered header
@@ -79,7 +95,7 @@ func deliverMsg(msg *kafka.Message) {
 				Opaque:         msg.Opaque,
 				Headers:        headers,
 			}
-			producer.Produce(deliveryMsg, nil)
+			d.producer.Produce(deliveryMsg, nil)
 			log.Infof("Delivered message: %s %s", deliveryMsg.Key, messageId)
 		} else if delivered {
 			log.Debugf("Message already delivered: %d-%s %s", msg.TopicPartition.Offset, msg.Key, messageId)

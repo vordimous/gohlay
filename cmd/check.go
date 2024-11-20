@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/vordimous/gohlay/config"
-	"github.com/vordimous/gohlay/internal"
+	"github.com/vordimous/gohlay/find"
 )
 
 // checkCmd represents the check command
@@ -21,8 +21,7 @@ Example Output:
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		config.Load()
-		internal.CheckForDeliveries()
-		deliveriesJson, _ := json.Marshal(internal.GetDeliveries())
+		deliveriesJson, _ := json.Marshal(find.CheckForDeliveries().GetGohlayed())
 		fmt.Println(string(deliveriesJson))
 
 	},

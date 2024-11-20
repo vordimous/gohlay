@@ -1,24 +1,12 @@
-package common
+package kafkautil
 
 import (
-	"fmt"
 	"time"
 
 	kafka "github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"github.com/vordimous/gohlay/config"
 )
-
-// FmtMessageId formats a gohlayed message id
-func FmtMessageId(offset kafka.Offset, delay int64) string {
-	return fmt.Sprintf("%v-%d", offset, delay)
-}
-
-// FmtKafkaGroup formats a group id
-func FmtKafkaGroup(reason string, topic string) string {
-	return fmt.Sprintf("group.id=gohlay_%s:%s:%d", reason, topic, viper.GetInt64("deadline"))
-}
 
 // ParseHeaders extracts relevant information from the message headers
 func ParseHeaders(headers []kafka.Header) (deliveryTime int64, isDelivered bool, isDeliveredKey string, gohlayed bool) {
