@@ -23,7 +23,8 @@ func FmtKafkaGroup(reason string, topic string) string {
 // ParseHeaders extracts relevant information from the message headers
 func ParseHeaders(headers []kafka.Header) (deliveryTime int64, isDelivered bool, isDeliveredKey string, gohlayed bool) {
 	for _, h := range headers {
-		if h.Key == config.GetHeaderOverride("GOHLAY") {
+		switch h.Key {
+		case config.GetHeaderOverride("GOHLAY"):
 			timeString := string(h.Value)
 			if t, err := time.Parse(time.UnixDate, timeString); err == nil {
 				deliveryTime = t.UnixMilli()
@@ -31,8 +32,7 @@ func ParseHeaders(headers []kafka.Header) (deliveryTime int64, isDelivered bool,
 				log.Errorf("Calculating time remaining from GOHLAY header %v", err)
 			}
 			gohlayed = true
-		}
-		if h.Key == config.GetHeaderOverride("GOHLAY_DELIVERED") {
+		case config.GetHeaderOverride("GOHLAY_DELIVERED"):
 			gohlayed = true
 			isDeliveredKey = string(h.Value)
 			isDelivered = true
