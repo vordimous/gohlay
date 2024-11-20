@@ -13,7 +13,22 @@ func init() {
 	log.Debugf("Kafka Lib Version: %s", kafkaVersion)
 }
 
-func getBootrapServersString() (string) {
+func GetHeaderOverride(header string) string {
+	overrideMap := map[string]string{}
+	for _, kv := range strings.Split(viper.GetString("override_headers"), ",") {
+		p := strings.Split(kv, "=")
+		if len(p) == 2 {
+			overrideMap[p[0]] = p[1]
+		}
+	}
+	if overrideMap[header] != "" {
+		return overrideMap[header]
+	}
+
+	return header
+}
+
+func getBootrapServersString() string {
 	return strings.Join(viper.GetStringSlice("bootstrap_servers"), ",")
 }
 

@@ -7,6 +7,7 @@ import (
 	kafka "github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"github.com/vordimous/gohlay/config"
 )
 
 // FmtMessageId formats a gohlayed message id
@@ -22,7 +23,7 @@ func FmtKafkaGroup(reason string, topic string) string {
 // ParseHeaders extracts relevant information from the message headers
 func ParseHeaders(headers []kafka.Header) (deliveryTime int64, isDelivered bool, isDeliveredKey string, gohlayed bool) {
 	for _, h := range headers {
-		if h.Key == "GOHLAY" {
+		if h.Key == config.GetHeaderOverride("GOHLAY") {
 			timeString := string(h.Value)
 			if t, err := time.Parse(time.UnixDate, timeString); err == nil {
 				deliveryTime = t.UnixMilli()
@@ -31,7 +32,7 @@ func ParseHeaders(headers []kafka.Header) (deliveryTime int64, isDelivered bool,
 			}
 			gohlayed = true
 		}
-		if h.Key == "GOHLAY_DELIVERED" {
+		if h.Key == config.GetHeaderOverride("GOHLAY_DELIVERED") {
 			gohlayed = true
 			isDeliveredKey = string(h.Value)
 			isDelivered = true

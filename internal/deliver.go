@@ -61,10 +61,10 @@ func deliverMsg(msg *kafka.Message) {
 
 			// replace the deadline header with the delivered header
 			for _, h := range msg.Headers {
-				if h.Key == "GOHLAY" {
+				if h.Key == config.GetHeaderOverride("GOHLAY") {
 					headers = append(headers,
 						kafka.Header{
-							Key:   "GOHLAY_DELIVERED",
+							Key:   config.GetHeaderOverride("GOHLAY_DELIVERED"),
 							Value: []byte(messageId),
 						})
 				} else {
