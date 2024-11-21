@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"fmt"
 	"math"
 	"os"
 	"os/signal"
@@ -14,7 +13,7 @@ import (
 )
 
 var (
-	sigchan   chan os.Signal
+	sigchan chan os.Signal
 	maxOffset kafka.Offset
 )
 
@@ -26,22 +25,18 @@ func init() {
 }
 
 type MessageHandler interface {
-	GetReason() string
+	TopicName() string
+	GroupName() string
 	HandleMessage(*kafka.Message)
 }
 
-// ScanAll creates a unique consumer that reads all messages on the topics
-func ScanAll(handler MessageHandler) {
-	for _, topic := range config.GetTopics() {
-		scanTopic(topic, handler)
-	}
-}
-
-// scanTopic creates a unique consumer that reads all messages on the topics
-func scanTopic(topic string, handler MessageHandler) {
+// ScanTopic creates a unique consumer that reads all messages on the topics
+func ScanTopic(handler MessageHandler) {
 	topicConfigMap := config.GetConsumer()
-	fmt.Printf("handler: %+v", handler)
-	if err := topicConfigMap.Set(kafkautil.FmtKafkaGroup(handler.GetReason(), topic)); err != nil {
+	topic := handler.TopicName()
+	partitionOffsets := map[int32]kafka.Offset{}
+
+	if err := topicConfigMap.Set(kafkautil.FmtKafkaGroup(handler.GroupName(), topic)); err != nil {
 		log.Fatalf("Failed to set the consumer groupId %v", err)
 		os.Exit(1)
 	}
@@ -73,6 +68,11 @@ func scanTopic(topic string, handler MessageHandler) {
 			Topic:     &topic,
 			Partition: partition,
 		})
+		partitionOffsets[partition] = maxOffset
+	}
+	if len(topicPartitions) == 0 {
+		log.Infof("No partitions found for topic: %s", topic)
+		return
 	}
 	if err := c.Assign(topicPartitions); err != nil {
 		log.Fatal("Failed subscribe ", err)
@@ -94,23 +94,28 @@ func scanTopic(topic string, handler MessageHandler) {
 
 			switch e := ev.(type) {
 			case *kafka.Message:
-				if e.TopicPartition.Offset < maxOffset {
+				if e.TopicPartition.Offset < partitionOffsets[e.TopicPartition.Partition] {
 					handler.HandleMessage(e)
 				} else {
 					run = false
 				}
 			case kafka.PartitionEOF:
-				maxOffset = e.Offset
-				log.Debugf("%% Reached maxOffset: %v %v %+v", maxOffset, e.Partition, e)
-				run = false
+				partitionOffsets[e.Partition] = e.Offset
+				log.Debugf("kafka.Event PartitionEOF; Reached the end of the partition: %v %v %+v", partitionOffsets[e.Partition], e.Partition, e)
+				delete(partitionOffsets, e.Partition)
+
+				// stop scanning once all partitions have reached the end
+				if(len(partitionOffsets) == 0) {
+					run = false
+				}
 			case kafka.RevokedPartitions:
-				log.Debugf("%% Revoked: %v", e)
+				log.Debugf("kafka.Event RevokedPartitions: %v", e)
 				run = false
 			case kafka.Error:
-				log.Errorf("%% Error: %v", e)
+				log.Errorf("kafka.Event Error: %v", e)
 				run = false
 			default:
-				log.Debugf("Ignored: %v", e)
+				log.Debugf("kafka.Event Ignored: %v", e)
 			}
 		}
 	}

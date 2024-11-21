@@ -21,10 +21,23 @@ Example Output:
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		config.Load()
-		deliveriesJson, _ := json.Marshal(find.CheckForDeliveries().GetGohlayed())
+		results := []CheckResult{}
+		for _, f := range find.CheckForDeliveries() {
+			r := CheckResult{
+				Topic:        f.TopicName(),
+				DeliveryKeys: f.GohlayedSlice(),
+			}
+			results = append(results, r)
+		}
+		deliveriesJson, _ := json.Marshal(results)
 		fmt.Println(string(deliveriesJson))
 
 	},
+}
+
+type CheckResult struct {
+	Topic        string   `json:"topic,omitempty"`
+	DeliveryKeys []string `json:"delivery_keys,omitempty"`
 }
 
 func init() {

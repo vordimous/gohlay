@@ -11,63 +11,37 @@ import (
 )
 
 // HandleDeliveries produces the gohlayed kafka messages
-func HandleDeliveries(deliveryKeys map[string]bool) {
-	d := &Deliverer{
-		reason: "delivering",
-		deliveryKeys: deliveryKeys,
-	}
+func HandleDeliveries(topic string, deliveryKeys map[string]bool) {
 	p, err := kafka.NewProducer(config.GetProducer())
 	if err != nil {
 		log.Fatal("Failed to create producer ", err)
 		os.Exit(1)
 	}
-	d.producer = p
+	d := &Deliverer{
+		topic: topic,
+		producer: p,
+		deliveryKeys: deliveryKeys,
+	}
 	d.doDeliveries()
 }
 
-
 type Deliverer struct {
-	reason string
+	topic string
 	deliveryKeys map[string]bool
 	producer *kafka.Producer
 }
 
-func (d *Deliverer) GetReason() string {
-	return d.reason
+// TopicName is the name of the kafka topic
+func (d *Deliverer) TopicName() string {
+	return d.topic
 }
 
-// HandleDeliveries produces the gohlayed kafka messages
-func (d *Deliverer) doDeliveries() {
-	didD := 0
-	defer func() {
-		d.producer.Close()
-		log.Infof("Number of gohlayed messages delivered: %v", didD)
-	}()
-	// Delivery report handler for produced messages
-	go func() {
-		for e := range d.producer.Events() {
-			switch ev := e.(type) {
-			case *kafka.Message:
-				if ev.TopicPartition.Error != nil {
-					log.Errorf("Delivery failed: %+v", ev.TopicPartition)
-				} else {
-					didD++
-				}
-			default:
-				log.Debugf("Ignored produce: %+v", ev)
-			}
-		}
-	}()
-	log.Infof("Number of gohlayed messages on topic: %v", len(d.deliveryKeys))
-
-	internal.ScanAll(d)
-
-	// Wait for message deliveries before shutting down
-	for pending := 1; pending > 0; pending = d.producer.Flush(1000) {
-		log.Debug("Waiting for remaining deliveries")
-	}
+// GroupName is a human readable name of the purpose for the message handler
+func (d *Deliverer) GroupName() string {
+	return "delivering"
 }
 
+// HandleMessage will deliver any gohlayed message that isn't already delivered
 func (d *Deliverer) HandleMessage(msg *kafka.Message) {
 	if delay, delivered, _, gohlayed := kafkautil.ParseHeaders(msg.Headers); gohlayed && !delivered {
 		messageId := kafkautil.FmtMessageId(msg.TopicPartition.Offset, delay)
@@ -100,5 +74,36 @@ func (d *Deliverer) HandleMessage(msg *kafka.Message) {
 		} else if delivered {
 			log.Debugf("Message already delivered: %d-%s %s", msg.TopicPartition.Offset, msg.Key, messageId)
 		}
+	}
+}
+
+func (d *Deliverer) doDeliveries() {
+	didD := 0
+	defer func() {
+		d.producer.Close()
+		log.Infof("Number of gohlayed messages delivered: %v", didD)
+	}()
+	// Delivery report handler for produced messages
+	go func() {
+		for e := range d.producer.Events() {
+			switch ev := e.(type) {
+			case *kafka.Message:
+				if ev.TopicPartition.Error != nil {
+					log.Errorf("Delivery failed: %+v", ev.TopicPartition)
+				} else {
+					didD++
+				}
+			default:
+				log.Debugf("Ignored produce: %+v", ev)
+			}
+		}
+	}()
+	log.Infof("Number of gohlayed messages on topic: %v", len(d.deliveryKeys))
+
+	internal.ScanTopic(d)
+
+	// Wait for message deliveries before shutting down
+	for pending := 1; pending > 0; pending = d.producer.Flush(1000) {
+		log.Debug("Waiting for remaining deliveries")
 	}
 }

@@ -37,7 +37,7 @@ func TestFmtMessageId(t *testing.T) {
 
 func TestFmtKafkaGroup(t *testing.T) {
 	type args struct {
-		reason string
+		groupName string
 		topic  string
 	}
 	tests := []struct {
@@ -49,7 +49,7 @@ func TestFmtKafkaGroup(t *testing.T) {
 		{
 			name: "Correct Format",
 			args: args{
-				reason: "test",
+				groupName: "test",
 				topic:  "aTopic",
 			},
 			deadline: 12345,
@@ -59,7 +59,7 @@ func TestFmtKafkaGroup(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			viper.Set("deadline", tt.deadline)
-			if got := FmtKafkaGroup(tt.args.reason, tt.args.topic); got != tt.want {
+			if got := FmtKafkaGroup(tt.args.groupName, tt.args.topic); got != tt.want {
 				t.Errorf("FmtKafkaGroup() = %v, want %v", got, tt.want)
 			}
 		})
