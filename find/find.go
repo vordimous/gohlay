@@ -60,8 +60,9 @@ func (f *Finder) HandleMessage(msg *kafka.Message) string {
 		return fmt.Sprintf("message is not Gohlayed: %v %d %d", msg.TopicPartition.Topic, msg.TopicPartition.Partition, msg.TopicPartition.Offset)
 
 	}
-	if gohlayedMeta.Delivered || gohlayedMeta.DeliveryTime == 0 {
-		delete(f.gohlayedMessages, gohlayedMeta.DeliveryKey)
+	deliveryKey := kafkautil.FmtDeliveryKey(msg.TopicPartition.Offset, gohlayedMeta.DeliveryTime)
+	if gohlayedMeta.Delivered || gohlayedMeta.DeliveryKey != "" || f.gohlayedMessages[gohlayedMeta.DeliveryKey] {
+		f.gohlayedMessages[gohlayedMeta.DeliveryKey] = true
 		return fmt.Sprintf("message already delivered: %d-%s %s", msg.TopicPartition.Offset, msg.Key, gohlayedMeta.DeliveryKey)
 	}
 
@@ -71,7 +72,6 @@ func (f *Finder) HandleMessage(msg *kafka.Message) string {
 		return fmt.Sprintf("message not ready for delivery: %d-%s %d", msg.TopicPartition.Offset, msg.Key, deliveryTime-deadline)
 	}
 
-	deliveryKey := kafkautil.FmtDeliveryKey(msg.TopicPartition.Offset, gohlayedMeta.DeliveryTime)
 	f.gohlayedMessages[deliveryKey] = false // set key to be delivered with a delivery value of false
 	log.Infof("Setting message for delivery: %d %d-%s %s", msg.TopicPartition.Partition, msg.TopicPartition.Offset, msg.Key, deliveryKey)
 	return ""

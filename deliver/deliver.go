@@ -50,15 +50,12 @@ func (d *Deliverer) HandleMessage(msg *kafka.Message) string {
 		return fmt.Sprintf("message is not Gohlayed: %v %d %d", msg.TopicPartition.Topic, msg.TopicPartition.Partition, msg.TopicPartition.Offset)
 
 	}
-	if gohlayedMeta.Delivered {
-		return fmt.Sprintf("message already delivered: %d-%s %s", msg.TopicPartition.Offset, msg.Key, gohlayedMeta.DeliveryKey)
-	}
-
 	deliveryKey := kafkautil.FmtDeliveryKey(msg.TopicPartition.Offset, gohlayedMeta.DeliveryTime)
-	if delivered := d.deliveryKeyMap[deliveryKey]; delivered {
+	if gohlayedMeta.Delivered || d.deliveryKeyMap[deliveryKey] {
 		return fmt.Sprintf("message already delivered: %d-%s %s", msg.TopicPartition.Offset, msg.Key, gohlayedMeta.DeliveryKey)
 
 	}
+
 	log.Debugf("Found deliverable message: %d %d-%s %s", msg.TopicPartition.Partition, msg.TopicPartition.Offset, msg.Key, deliveryKey)
 	var headers = []kafka.Header{}
 
