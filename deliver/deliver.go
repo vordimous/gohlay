@@ -1,6 +1,7 @@
 package deliver
 
 import (
+	"fmt"
 	"os"
 
 	kafka "github.com/confluentinc/confluent-kafka-go/v2/kafka"
@@ -11,7 +12,7 @@ import (
 )
 
 // HandleDeliveries produces the gohlayed kafka messages
-func HandleDeliveries(topic string, deliveryKeys map[string]bool) {
+func HandleDeliveries(topic string, deliveryKeyMap map[string]bool) {
 	p, err := kafka.NewProducer(config.GetProducer())
 	if err != nil {
 		log.Fatal("Failed to create producer ", err)
@@ -20,14 +21,14 @@ func HandleDeliveries(topic string, deliveryKeys map[string]bool) {
 	d := &Deliverer{
 		topic: topic,
 		producer: p,
-		deliveryKeys: deliveryKeys,
+		deliveryKeyMap: deliveryKeyMap,
 	}
 	d.doDeliveries()
 }
 
 type Deliverer struct {
 	topic string
-	deliveryKeys map[string]bool
+	deliveryKeyMap map[string]bool
 	producer *kafka.Producer
 }
 
@@ -42,39 +43,52 @@ func (d *Deliverer) GroupName() string {
 }
 
 // HandleMessage will deliver any gohlayed message that isn't already delivered
-func (d *Deliverer) HandleMessage(msg *kafka.Message) {
-	if delay, delivered, _, gohlayed := kafkautil.ParseHeaders(msg.Headers); gohlayed && !delivered {
-		messageId := kafkautil.FmtMessageId(msg.TopicPartition.Offset, delay)
-		log.Debugf("Found deliverable message: %d %d-%s %s", msg.TopicPartition.Partition, msg.TopicPartition.Offset, msg.Key, messageId)
-		if delivered, exists := d.deliveryKeys[messageId]; exists && !delivered {
-			var headers = []kafka.Header{}
+func (d *Deliverer) HandleMessage(msg *kafka.Message) string {
+	gohlayedMeta := kafkautil.ParseHeaders(msg.Headers)
 
-			// replace the deadline header with the delivered header
-			for _, h := range msg.Headers {
-				if h.Key == config.GetHeaderOverride("GOHLAY") {
-					headers = append(headers,
-						kafka.Header{
-							Key:   config.GetHeaderOverride("GOHLAY_DELIVERED"),
-							Value: []byte(messageId),
-						})
-				} else {
-					headers = append(headers, h)
-				}
-			}
+	if !gohlayedMeta.Gohlayed {
+		return fmt.Sprintf("message is not Gohlayed: %v %d %d", msg.TopicPartition.Topic, msg.TopicPartition.Partition, msg.TopicPartition.Offset)
 
-			deliveryMsg := &kafka.Message{
-				TopicPartition: kafka.TopicPartition{Topic: msg.TopicPartition.Topic, Partition: msg.TopicPartition.Partition},
-				Value:          msg.Value,
-				Key:            msg.Key,
-				Opaque:         msg.Opaque,
-				Headers:        headers,
-			}
-			d.producer.Produce(deliveryMsg, nil)
-			log.Infof("Delivered message: %s %s", deliveryMsg.Key, messageId)
-		} else if delivered {
-			log.Debugf("Message already delivered: %d-%s %s", msg.TopicPartition.Offset, msg.Key, messageId)
+	}
+	if gohlayedMeta.Delivered {
+		return fmt.Sprintf("message already delivered: %d-%s %s", msg.TopicPartition.Offset, msg.Key, gohlayedMeta.DeliveryKey)
+	}
+
+	deliveryKey := kafkautil.FmtDeliveryKey(msg.TopicPartition.Offset, gohlayedMeta.DeliveryTime)
+	if delivered := d.deliveryKeyMap[deliveryKey]; delivered {
+		return fmt.Sprintf("message already delivered: %d-%s %s", msg.TopicPartition.Offset, msg.Key, gohlayedMeta.DeliveryKey)
+
+	}
+	log.Debugf("Found deliverable message: %d %d-%s %s", msg.TopicPartition.Partition, msg.TopicPartition.Offset, msg.Key, deliveryKey)
+	var headers = []kafka.Header{}
+
+	// replace the deadline header with the delivered header
+	for _, h := range msg.Headers {
+		if h.Key == config.GetHeaderOverride("GOHLAY") {
+			headers = append(headers,
+				kafka.Header{
+					Key:   config.GetHeaderOverride("GOHLAY_DELIVERED"),
+					Value: []byte(deliveryKey),
+				})
+		} else {
+			headers = append(headers, h)
 		}
 	}
+
+	deliveryMsg := &kafka.Message{
+		TopicPartition: kafka.TopicPartition{Topic: msg.TopicPartition.Topic, Partition: msg.TopicPartition.Partition},
+		Value:          msg.Value,
+		Key:            msg.Key,
+		Opaque:         msg.Opaque,
+		Headers:        headers,
+	}
+	err := d.producer.Produce(deliveryMsg, nil)
+	if err != nil {
+		log.Fatalf("Failed to produce message: %v", err)
+		return fmt.Sprintf("Failed to produce message: %v", err)
+	}
+	log.Infof("Delivered message: %s %s", deliveryMsg.Key, deliveryKey)
+	return ""
 }
 
 func (d *Deliverer) doDeliveries() {
@@ -98,7 +112,7 @@ func (d *Deliverer) doDeliveries() {
 			}
 		}
 	}()
-	log.Infof("Number of gohlayed messages on topic: %v", len(d.deliveryKeys))
+	log.Infof("Number of gohlayed messages on topic: %v", len(d.deliveryKeyMap))
 
 	internal.ScanTopic(d)
 

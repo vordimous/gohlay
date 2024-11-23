@@ -13,10 +13,7 @@ func TestParseHeaders(t *testing.T) {
 	tests := []struct {
 		name               string
 		args               args
-		wantDeliveryTime   int64
-		wantIsDelivered    bool
-		wantIsDeliveredKey string
-		wantGohlayed       bool
+		want  GohlayedMeta
 	}{
 		{
 			name: "Gohlayed message",
@@ -28,10 +25,12 @@ func TestParseHeaders(t *testing.T) {
 					},
 				},
 			},
-			wantDeliveryTime:   626110137000,
-			wantIsDelivered:    false,
-			wantIsDeliveredKey: "",
-			wantGohlayed:       true,
+			want: GohlayedMeta{
+				DeliveryTime:   626110137000,
+				Delivered:    false,
+				DeliveryKey: "",
+				Gohlayed:       true,
+			},
 		},
 		{
 			name: "Gohlayed message is Delivered",
@@ -43,26 +42,28 @@ func TestParseHeaders(t *testing.T) {
 					},
 				},
 			},
-			wantDeliveryTime:   0,
-			wantIsDelivered:    true,
-			wantIsDeliveredKey: "0-12345",
-			wantGohlayed:       true,
+			want: GohlayedMeta{
+				DeliveryTime:   0,
+				Delivered:    true,
+				DeliveryKey: "0-12345",
+				Gohlayed:       true,
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotDeliveryTime, gotIsDelivered, gotIsDeliveredKey, gotGohlayed := ParseHeaders(tt.args.headers)
-			if gotDeliveryTime != tt.wantDeliveryTime {
-				t.Errorf("ParseHeaders() gotDeliveryTime = %v, want %v", gotDeliveryTime, tt.wantDeliveryTime)
+			got := ParseHeaders(tt.args.headers)
+			if got.DeliveryTime != tt.want.DeliveryTime {
+				t.Errorf("ParseHeaders() got.DeliveryTime = %v, want %v", got.DeliveryTime, tt.want.DeliveryTime)
 			}
-			if gotIsDelivered != tt.wantIsDelivered {
-				t.Errorf("ParseHeaders() gotIsDelivered = %v, want %v", gotIsDelivered, tt.wantIsDelivered)
+			if got.Delivered != tt.want.Delivered {
+				t.Errorf("ParseHeaders() got.Delivered = %v, want %v", got.Delivered, tt.want.Delivered)
 			}
-			if gotIsDeliveredKey != tt.wantIsDeliveredKey {
-				t.Errorf("ParseHeaders() gotIsDeliveredKey = %v, want %v", gotIsDeliveredKey, tt.wantIsDeliveredKey)
+			if got.DeliveryKey != tt.want.DeliveryKey {
+				t.Errorf("ParseHeaders() got.DeliveryKey = %v, want %v", got.DeliveryKey, tt.want.DeliveryKey)
 			}
-			if gotGohlayed != tt.wantGohlayed {
-				t.Errorf("ParseHeaders() gotGohlayed = %v, want %v", gotGohlayed, tt.wantGohlayed)
+			if got.Gohlayed != tt.want.Gohlayed {
+				t.Errorf("ParseHeaders() got.Gohlayed = %v, want %v", got.Gohlayed, tt.want.Gohlayed)
 			}
 		})
 	}

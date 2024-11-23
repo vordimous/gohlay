@@ -7,8 +7,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-// FmtMessageId formats a gohlayed message id
-func FmtMessageId(offset kafka.Offset, delay int64) string {
+// FmtDeliveryKey formats a gohlayed message id
+func FmtDeliveryKey(offset kafka.Offset, delay int64) string {
 	return fmt.Sprintf("%v-%d", offset, delay)
 }
 
