@@ -8,13 +8,13 @@ import (
 
 	kafka "github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	log "github.com/sirupsen/logrus"
-	"github.com/vordimous/gohlay/common"
 	"github.com/vordimous/gohlay/config"
+	"github.com/vordimous/gohlay/kafkautil"
 )
 
 var (
-	sigchan     chan os.Signal
-	maxOffset   kafka.Offset
+	sigchan chan os.Signal
+	maxOffset kafka.Offset
 )
 
 func init() {
@@ -24,18 +24,19 @@ func init() {
 	maxOffset, _ = kafka.NewOffset(math.MaxInt64)
 }
 
-// ScanAll creates a unique consumer that reads all messages on the topics
-func ScanAll(reason string, handleMessage func(*kafka.Message)) {
-	for _, topic := range config.GetTopics() {
-		scanTopic(topic, reason, handleMessage)
-    }
+type MessageHandler interface {
+	TopicName() string
+	GroupName() string
+	HandleMessage(*kafka.Message)
 }
 
-// scanTopic creates a unique consumer that reads all messages on the topics
-func scanTopic(topic string, reason string, handleMessage func(*kafka.Message)) {
-
+// ScanTopic creates a unique consumer that reads all messages on the topics
+func ScanTopic(handler MessageHandler) {
 	topicConfigMap := config.GetConsumer()
-	if err := topicConfigMap.Set(common.FmtKafkaGroup(reason, topic)); err != nil {
+	topic := handler.TopicName()
+	partitionOffsets := map[int32]kafka.Offset{}
+
+	if err := topicConfigMap.Set(kafkautil.FmtKafkaGroup(handler.GroupName(), topic)); err != nil {
 		log.Fatalf("Failed to set the consumer groupId %v", err)
 		os.Exit(1)
 	}
@@ -53,7 +54,7 @@ func scanTopic(topic string, reason string, handleMessage func(*kafka.Message)) 
 	}()
 
 	partitions := []int32{}
-	if metadata, err :=c.GetMetadata(&topic, false, 100); err != nil {
+	if metadata, err := c.GetMetadata(&topic, false, 100); err != nil {
 		log.Warning("Failed to get Partitions, using partition 0", err)
 		partitions = append(partitions, 0)
 	} else {
@@ -64,9 +65,14 @@ func scanTopic(topic string, reason string, handleMessage func(*kafka.Message)) 
 	topicPartitions := []kafka.TopicPartition{}
 	for _, partition := range partitions {
 		topicPartitions = append(topicPartitions, kafka.TopicPartition{
-			Topic: &topic,
+			Topic:     &topic,
 			Partition: partition,
 		})
+		partitionOffsets[partition] = maxOffset
+	}
+	if len(topicPartitions) == 0 {
+		log.Infof("No partitions found for topic: %s", topic)
+		return
 	}
 	if err := c.Assign(topicPartitions); err != nil {
 		log.Fatal("Failed subscribe ", err)
@@ -88,25 +94,29 @@ func scanTopic(topic string, reason string, handleMessage func(*kafka.Message)) 
 
 			switch e := ev.(type) {
 			case *kafka.Message:
-				if e.TopicPartition.Offset < maxOffset {
-					handleMessage(e)
+				if e.TopicPartition.Offset < partitionOffsets[e.TopicPartition.Partition] {
+					handler.HandleMessage(e)
 				} else {
 					run = false
 				}
 			case kafka.PartitionEOF:
-				maxOffset = e.Offset
-				log.Debugf("%% Reached maxOffset: %v %v %+v", maxOffset, e.Partition, e)
-				run = false
+				partitionOffsets[e.Partition] = e.Offset
+				log.Debugf("kafka.Event PartitionEOF; Reached the end of the partition: %v %v %+v", partitionOffsets[e.Partition], e.Partition, e)
+				delete(partitionOffsets, e.Partition)
+
+				// stop scanning once all partitions have reached the end
+				if(len(partitionOffsets) == 0) {
+					run = false
+				}
 			case kafka.RevokedPartitions:
-				log.Debugf("%% Revoked: %v", e)
+				log.Debugf("kafka.Event RevokedPartitions: %v", e)
 				run = false
 			case kafka.Error:
-				log.Errorf("%% Error: %v", e)
+				log.Errorf("kafka.Event Error: %v", e)
 				run = false
 			default:
-				log.Debugf("Ignored: %v", e)
+				log.Debugf("kafka.Event Ignored: %v", e)
 			}
 		}
 	}
 }
-
