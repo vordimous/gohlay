@@ -8,23 +8,30 @@ import (
 	"github.com/vordimous/gohlay/config"
 )
 
+type GohlayedMeta struct {
+	Gohlayed bool
+	DeliveryTime int64
+	Delivered bool
+	DeliveryKey string
+}
+
 // ParseHeaders extracts relevant information from the message headers
-func ParseHeaders(headers []kafka.Header) (deliveryTime int64, isDelivered bool, isDeliveredKey string, gohlayed bool) {
+func ParseHeaders(headers []kafka.Header) (GohlayedMeta) {
+	meta := GohlayedMeta{}
 	for _, h := range headers {
 		switch h.Key {
 		case config.GetHeaderOverride("GOHLAY"):
-			timeString := string(h.Value)
-			if t, err := time.Parse(time.UnixDate, timeString); err == nil {
-				deliveryTime = t.UnixMilli()
+			if t, err := time.Parse(time.UnixDate, string(h.Value)); err == nil {
+				meta.DeliveryTime = t.UnixMilli()
 			} else {
 				log.Errorf("Calculating time remaining from GOHLAY header %v", err)
 			}
-			gohlayed = true
+			meta.Gohlayed = true
 		case config.GetHeaderOverride("GOHLAY_DELIVERED"):
-			gohlayed = true
-			isDeliveredKey = string(h.Value)
-			isDelivered = true
+			meta.Gohlayed = true
+			meta.DeliveryKey = string(h.Value)
+			meta.Delivered = true
 		}
 	}
-	return
+	return meta
 }

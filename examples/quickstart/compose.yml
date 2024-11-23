@@ -88,10 +88,10 @@ services:
           -b kafka:29092 \
           -k "now" \
           -t gohlay \
-          -H GOHLAY="$(date)"
+          -H GOHLAY="$(date -u)"
 
         echo '{"id":200000,"message":"Hello, Future Gohlay"}' | kafkacat -P \
           -b kafka:29092 \
           -k "future" \
           -t gohlay \
-          -H GOHLAY="$(date -d "+30 seconds")"
+          -H GOHLAY="$(date -u -d "+30 seconds")"

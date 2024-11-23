@@ -1,6 +1,7 @@
 package find
 
 import (
+	"fmt"
 	"maps"
 	"slices"
 
@@ -25,7 +26,7 @@ func CheckForDeliveries() (found []*Finder) {
 }
 
 type Finder struct {
-	topic string
+	topic            string
 	gohlayedMessages map[string]bool
 }
 
@@ -53,26 +54,27 @@ func (f *Finder) GroupName() string {
 }
 
 // HandleMessage index any gohlayed message with a delivery time passed the deadline
-func (f *Finder) HandleMessage(msg *kafka.Message) {
-	deadline := viper.GetInt64("deadline")
-	deliveryTime, delivered, deliveredKey, hasHeader := kafkautil.ParseHeaders(msg.Headers)
-	if hasHeader {
-		if !delivered && deliveryTime != 0 {
-			log.Debugf("Message time remaining: %v", deliveryTime-deadline)
-			if deliveryTime < deadline {
-				messageId := kafkautil.FmtMessageId(msg.TopicPartition.Offset, deliveryTime)
-				f.gohlayedMessages[messageId] = false // set key to be delivered with a delivery value of false
-				log.Debugf("Setting message for delivery: %d %d-%s %s", msg.TopicPartition.Partition, msg.TopicPartition.Offset, msg.Key, messageId)
-			} else {
-				log.Debugf("Message not ready for delivery: %d-%s", msg.TopicPartition.Offset, msg.Key)
-			}
-		} else if delivered {
-			delete(f.gohlayedMessages, deliveredKey)
-			log.Debugf("Message is already delivered: %d-%s %s", msg.TopicPartition.Offset, msg.Key, deliveredKey)
-		}
-	} else {
-		log.Debugf("Messaged is not gohlayed: %d-%s", msg.TopicPartition.Offset, msg.Key)
+func (f *Finder) HandleMessage(msg *kafka.Message) string {
+	gohlayedMeta := kafkautil.ParseHeaders(msg.Headers)
+	if !gohlayedMeta.Gohlayed {
+		return fmt.Sprintf("message is not Gohlayed: %v %d %d", msg.TopicPartition.Topic, msg.TopicPartition.Partition, msg.TopicPartition.Offset)
+
 	}
+	deliveryKey := kafkautil.FmtDeliveryKey(msg.TopicPartition.Offset, gohlayedMeta.DeliveryTime)
+	if gohlayedMeta.Delivered || gohlayedMeta.DeliveryKey != "" || f.gohlayedMessages[gohlayedMeta.DeliveryKey] {
+		f.gohlayedMessages[gohlayedMeta.DeliveryKey] = true
+		return fmt.Sprintf("message already delivered: %d-%s %s", msg.TopicPartition.Offset, msg.Key, gohlayedMeta.DeliveryKey)
+	}
+
+	deadline := viper.GetInt64("deadline")
+	deliveryTime := gohlayedMeta.DeliveryTime
+	if deliveryTime > deadline {
+		return fmt.Sprintf("message not ready for delivery: %d-%s %d", msg.TopicPartition.Offset, msg.Key, deliveryTime-deadline)
+	}
+
+	f.gohlayedMessages[deliveryKey] = false // set key to be delivered with a delivery value of false
+	log.Infof("Setting message for delivery: %d %d-%s %s", msg.TopicPartition.Partition, msg.TopicPartition.Offset, msg.Key, deliveryKey)
+	return ""
 }
 
 // GroupName is a human readable name of the purpose for the message handler

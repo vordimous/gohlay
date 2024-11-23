@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func TestFmtMessageId(t *testing.T) {
+func TestFmtDeliveryKey(t *testing.T) {
 	type args struct {
 		offset kafka.Offset
 		delay  int64
@@ -28,8 +28,8 @@ func TestFmtMessageId(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := FmtMessageId(tt.args.offset, tt.args.delay); got != tt.want {
-				t.Errorf("FmtMessageId() = %v, want %v", got, tt.want)
+			if got := FmtDeliveryKey(tt.args.offset, tt.args.delay); got != tt.want {
+				t.Errorf("FmtDeliveryKey() = %v, want %v", got, tt.want)
 			}
 		})
 	}

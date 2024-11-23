@@ -27,7 +27,7 @@ func init() {
 type MessageHandler interface {
 	TopicName() string
 	GroupName() string
-	HandleMessage(*kafka.Message)
+	HandleMessage(*kafka.Message) string
 }
 
 // ScanTopic creates a unique consumer that reads all messages on the topics
@@ -94,13 +94,11 @@ func ScanTopic(handler MessageHandler) {
 
 			switch e := ev.(type) {
 			case *kafka.Message:
-				if e.TopicPartition.Offset < partitionOffsets[e.TopicPartition.Partition] {
-					handler.HandleMessage(e)
-				} else {
-					run = false
+				partitionOffsets[e.TopicPartition.Partition] = e.TopicPartition.Offset
+				if res := handler.HandleMessage(e); res != "" {
+					log.Debugf("Handling Message result: %s", res)
 				}
 			case kafka.PartitionEOF:
-				partitionOffsets[e.Partition] = e.Offset
 				log.Debugf("kafka.Event PartitionEOF; Reached the end of the partition: %v %v %+v", partitionOffsets[e.Partition], e.Partition, e)
 				delete(partitionOffsets, e.Partition)
 
@@ -110,7 +108,14 @@ func ScanTopic(handler MessageHandler) {
 				}
 			case kafka.RevokedPartitions:
 				log.Debugf("kafka.Event RevokedPartitions: %v", e)
-				run = false
+				for p := range e.Partitions {
+					delete(partitionOffsets, int32(p))
+				}
+
+				// stop scanning once all partitions have reached the end
+				if(len(partitionOffsets) == 0) {
+					run = false
+				}
 			case kafka.Error:
 				log.Errorf("kafka.Event Error: %v", e)
 				run = false
