@@ -21,12 +21,12 @@ func TestParseHeaders(t *testing.T) {
 				headers: []kafka.Header{
 					{
 						Key:   "GOHLAY",
-						Value: []byte("Tue Nov 03 15:28:57 UTC 1989"),
+						Value: []byte("Fri Feb 13 23:31:30 UTC 2009"),
 					},
 				},
 			},
 			want: GohlayedMeta{
-				DeliveryTime:   626110137000,
+				DeliveryTime:   1234567890000,
 				Delivered:    false,
 				DeliveryKey: "",
 				Gohlayed:       true,
@@ -38,21 +38,21 @@ func TestParseHeaders(t *testing.T) {
 				headers: []kafka.Header{
 					{
 						Key:   "GOHLAY_DELIVERED",
-						Value: []byte("0-12345"),
+						Value: []byte("9-1234567890"),
 					},
 				},
 			},
 			want: GohlayedMeta{
 				DeliveryTime:   0,
 				Delivered:    true,
-				DeliveryKey: "0-12345",
+				DeliveryKey: "9-1234567890",
 				Gohlayed:       true,
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := ParseHeaders(tt.args.headers)
+			got, _ := ParseHeaders(tt.args.headers)
 			if got.DeliveryTime != tt.want.DeliveryTime {
 				t.Errorf("ParseHeaders() got.DeliveryTime = %v, want %v", got.DeliveryTime, tt.want.DeliveryTime)
 			}

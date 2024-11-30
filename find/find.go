@@ -30,7 +30,7 @@ type Finder struct {
 	gohlayedMessages map[string]bool
 }
 
-// GohlayedSlice returns the map of gohlayed message keys
+// GohlayedMap returns the map of gohlayed message keys
 func (f *Finder) GohlayedMap() map[string]bool {
 	return f.gohlayedMessages
 }
@@ -43,7 +43,7 @@ func (f *Finder) GohlayedSlice() []string {
 	return []string{}
 }
 
-// GroupName is a human readable name of the purpose for the message handler
+// TopicName is the name of the topic to use when finding
 func (f *Finder) TopicName() string {
 	return f.topic
 }
@@ -55,7 +55,11 @@ func (f *Finder) GroupName() string {
 
 // HandleMessage index any gohlayed message with a delivery time passed the deadline
 func (f *Finder) HandleMessage(msg *kafka.Message) string {
-	gohlayedMeta := kafkautil.ParseHeaders(msg.Headers)
+	gohlayedMeta, err := kafkautil.ParseHeaders(msg.Headers)
+	if err != nil {
+		return fmt.Sprintf("could't parse headers: %v", err)
+	}
+	
 	if !gohlayedMeta.Gohlayed {
 		return fmt.Sprintf("message is not Gohlayed: %v %d %d", msg.TopicPartition.Topic, msg.TopicPartition.Partition, msg.TopicPartition.Offset)
 
@@ -77,7 +81,6 @@ func (f *Finder) HandleMessage(msg *kafka.Message) string {
 	return ""
 }
 
-// GroupName is a human readable name of the purpose for the message handler
 func (f *Finder) findGohlayed() {
 	f.gohlayedMessages = map[string]bool{}
 	internal.ScanTopic(f)
