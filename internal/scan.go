@@ -32,7 +32,7 @@ type MessageHandler interface {
 
 // ScanTopic creates a unique consumer that reads all messages on the topics
 func ScanTopic(handler MessageHandler) {
-	topicConfigMap := config.GetConsumer()
+	topicConfigMap := config.Consumer()
 	topic := handler.TopicName()
 	partitionOffsets := map[int32]kafka.Offset{}
 
@@ -42,7 +42,7 @@ func ScanTopic(handler MessageHandler) {
 	}
 
 	log.Debugf("Scanning with %+v", topicConfigMap)
-	c, err := kafka.NewConsumer(topicConfigMap)
+	c, err := kafka.NewConsumer(&topicConfigMap)
 	if err != nil {
 		log.Fatal("Failed to create consumer ", err)
 		os.Exit(1)

@@ -20,14 +20,14 @@ func ParseHeaders(headers []kafka.Header) (GohlayedMeta, error) {
 	meta := GohlayedMeta{}
 	for _, h := range headers {
 		switch h.Key {
-		case config.GetHeaderOverride("GOHLAY"):
+		case config.HeaderOverride("GOHLAY"):
 			t, err := time.Parse(time.UnixDate, string(h.Value));
 			if err != nil {
 				return meta, fmt.Errorf("Calculating time remaining from GOHLAY header: %v", err)
 			}
 			meta.DeliveryTime = t.UnixMilli()
 			meta.Gohlayed = true
-		case config.GetHeaderOverride("GOHLAY_DELIVERED"):
+		case config.HeaderOverride("GOHLAY_DELIVERED"):
 			meta.Gohlayed = true
 			meta.DeliveryKey = string(h.Value)
 			meta.Delivered = true

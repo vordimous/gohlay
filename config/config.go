@@ -11,6 +11,7 @@ import (
 func Load() {
 	readEnv()
 	readConfig()
+	readKafkaConfig()
 	setupLogging()
 	printConfig()
 }
