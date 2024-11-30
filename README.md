@@ -29,7 +29,7 @@ docker run --rm ghcr.io/vordimous/gohlay --help
 ## Roadmap
 
 - [X] Config with flags, yaml, and Environment vars
-- [ ] configurable header names
+- [X] configurable header names
 - [ ] configurable group id
 - [ ] Kafka SASL auth
 - [ ] Deliver to multiple topics
