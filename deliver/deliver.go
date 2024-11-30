@@ -44,15 +44,18 @@ func (d *Deliverer) GroupName() string {
 
 // HandleMessage will deliver any gohlayed message that isn't already delivered
 func (d *Deliverer) HandleMessage(msg *kafka.Message) string {
-	gohlayedMeta := kafkautil.ParseHeaders(msg.Headers)
+	gohlayedMeta, err := kafkautil.ParseHeaders(msg.Headers)
+	if err != nil {
+		return fmt.Sprintf("could't parse headers: %v", err)
+	}
 
 	if !gohlayedMeta.Gohlayed {
-		return fmt.Sprintf("message is not Gohlayed: %v %d %d", msg.TopicPartition.Topic, msg.TopicPartition.Partition, msg.TopicPartition.Offset)
+		return fmt.Sprintf("message is not Gohlayed: %+v", msg.TopicPartition)
 
 	}
 	deliveryKey := kafkautil.FmtDeliveryKey(msg.TopicPartition.Offset, gohlayedMeta.DeliveryTime)
 	if gohlayedMeta.Delivered || d.deliveryKeyMap[deliveryKey] {
-		return fmt.Sprintf("message already delivered: %d-%s %s", msg.TopicPartition.Offset, msg.Key, gohlayedMeta.DeliveryKey)
+		return fmt.Sprintf("message already delivered: %+v %s", msg.TopicPartition.Offset, gohlayedMeta.DeliveryKey)
 
 	}
 
@@ -79,8 +82,8 @@ func (d *Deliverer) HandleMessage(msg *kafka.Message) string {
 		Opaque:         msg.Opaque,
 		Headers:        headers,
 	}
-	err := d.producer.Produce(deliveryMsg, nil)
-	if err != nil {
+
+	if err := d.producer.Produce(deliveryMsg, nil); err != nil {
 		log.Fatalf("Failed to produce message: %v", err)
 		return fmt.Sprintf("Failed to produce message: %v", err)
 	}
@@ -94,6 +97,7 @@ func (d *Deliverer) doDeliveries() {
 		d.producer.Close()
 		log.Infof("Number of gohlayed messages delivered: %v", didD)
 	}()
+
 	// Delivery report handler for produced messages
 	go func() {
 		for e := range d.producer.Events() {

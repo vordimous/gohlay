@@ -1,10 +1,10 @@
 package kafkautil
 
 import (
+	"fmt"
 	"time"
 
 	kafka "github.com/confluentinc/confluent-kafka-go/v2/kafka"
-	log "github.com/sirupsen/logrus"
 	"github.com/vordimous/gohlay/config"
 )
 
@@ -16,16 +16,16 @@ type GohlayedMeta struct {
 }
 
 // ParseHeaders extracts relevant information from the message headers
-func ParseHeaders(headers []kafka.Header) (GohlayedMeta) {
+func ParseHeaders(headers []kafka.Header) (GohlayedMeta, error) {
 	meta := GohlayedMeta{}
 	for _, h := range headers {
 		switch h.Key {
 		case config.GetHeaderOverride("GOHLAY"):
-			if t, err := time.Parse(time.UnixDate, string(h.Value)); err == nil {
-				meta.DeliveryTime = t.UnixMilli()
-			} else {
-				log.Errorf("Calculating time remaining from GOHLAY header %v", err)
+			t, err := time.Parse(time.UnixDate, string(h.Value));
+			if err != nil {
+				return meta, fmt.Errorf("Calculating time remaining from GOHLAY header: %v", err)
 			}
+			meta.DeliveryTime = t.UnixMilli()
 			meta.Gohlayed = true
 		case config.GetHeaderOverride("GOHLAY_DELIVERED"):
 			meta.Gohlayed = true
@@ -33,5 +33,5 @@ func ParseHeaders(headers []kafka.Header) (GohlayedMeta) {
 			meta.Delivered = true
 		}
 	}
-	return meta
+	return meta, nil
 }

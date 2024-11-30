@@ -15,8 +15,7 @@ var runCmd = &cobra.Command{
 messages that are past the deadline.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		config.Load()
-		findings := find.CheckForDeliveries()
-		for _, f := range findings {
+		for _, f := range find.CheckForDeliveries() {
 			deliver.HandleDeliveries(f.TopicName(), f.GohlayedMap())
 		}
 	},
