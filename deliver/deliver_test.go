@@ -35,7 +35,7 @@ func TestDeliverer_HandleMessage(t *testing.T) {
 					},
 				},
 			},
-			want: "message is not Gohlayed: test[9]@9",
+			want: "message is not Gohlayed: 9 ",
 		},
 		{
 			name: "Already Delivered Header",
@@ -59,7 +59,7 @@ func TestDeliverer_HandleMessage(t *testing.T) {
 					},
 				},
 			},
-			want: "message already delivered: 9 9-1234567890000",
+			want: "message is not Gohlayed: 9 9-1234567890000",
 		},
 		{
 			name: "Already Delivered Map",
@@ -85,7 +85,7 @@ func TestDeliverer_HandleMessage(t *testing.T) {
 					},
 				},
 			},
-			want: "message already delivered: 9 ",
+			want: "message will not be delivered: 9 ",
 		},
 	}
 	for _, tt := range tests {

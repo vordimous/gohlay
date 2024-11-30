@@ -59,21 +59,23 @@ func (f *Finder) HandleMessage(msg *kafka.Message) string {
 	if err != nil {
 		return fmt.Sprintf("could't parse headers: %v", err)
 	}
-	
+
 	if !gohlayedMeta.Gohlayed {
 		return fmt.Sprintf("message is not Gohlayed: %v %d %d", msg.TopicPartition.Topic, msg.TopicPartition.Partition, msg.TopicPartition.Offset)
 
 	}
-	deliveryKey := kafkautil.FmtDeliveryKey(msg.TopicPartition.Offset, gohlayedMeta.DeliveryTime)
-	if gohlayedMeta.Delivered || gohlayedMeta.DeliveryKey != "" || f.gohlayedMessages[gohlayedMeta.DeliveryKey] {
-		f.gohlayedMessages[gohlayedMeta.DeliveryKey] = true
-		return fmt.Sprintf("message already delivered: %d-%s %s", msg.TopicPartition.Offset, msg.Key, gohlayedMeta.DeliveryKey)
-	}
 
+	deliveryKey := kafkautil.FmtDeliveryKey(msg.TopicPartition.Offset, gohlayedMeta.DeliveryTime)
 	deadline := viper.GetInt64("deadline")
 	deliveryTime := gohlayedMeta.DeliveryTime
 	if deliveryTime > deadline {
+		delete(f.gohlayedMessages, deliveryKey) // remove the message so that it won't be delivered
 		return fmt.Sprintf("message not ready for delivery: %d-%s %d", msg.TopicPartition.Offset, msg.Key, deliveryTime-deadline)
+	}
+
+	if gohlayedMeta.DeliveredMsg || gohlayedMeta.DeliveryKey != "" || f.gohlayedMessages[gohlayedMeta.DeliveryKey] {
+		f.gohlayedMessages[gohlayedMeta.DeliveryKey] = true
+		return fmt.Sprintf("message already delivered: %d-%s %s", msg.TopicPartition.Offset, msg.Key, gohlayedMeta.DeliveryKey)
 	}
 
 	f.gohlayedMessages[deliveryKey] = false // set key to be delivered with a delivery value of false

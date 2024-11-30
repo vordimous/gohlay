@@ -11,7 +11,7 @@ import (
 type GohlayedMeta struct {
 	Gohlayed bool
 	DeliveryTime int64
-	Delivered bool
+	DeliveredMsg bool
 	DeliveryKey string
 }
 
@@ -23,14 +23,14 @@ func ParseHeaders(headers []kafka.Header) (GohlayedMeta, error) {
 		case config.HeaderOverride("GOHLAY"):
 			t, err := time.Parse(time.UnixDate, string(h.Value));
 			if err != nil {
-				return meta, fmt.Errorf("Calculating time remaining from GOHLAY header: %v", err)
+				return meta, fmt.Errorf("calculating time remaining from GOHLAY header: %v", err)
 			}
 			meta.DeliveryTime = t.UnixMilli()
 			meta.Gohlayed = true
 		case config.HeaderOverride("GOHLAY_DELIVERED"):
 			meta.Gohlayed = true
 			meta.DeliveryKey = string(h.Value)
-			meta.Delivered = true
+			meta.DeliveredMsg = true
 		}
 	}
 	return meta, nil

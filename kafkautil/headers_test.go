@@ -27,7 +27,7 @@ func TestParseHeaders(t *testing.T) {
 			},
 			want: GohlayedMeta{
 				DeliveryTime:   1234567890000,
-				Delivered:    false,
+				DeliveredMsg:    false,
 				DeliveryKey: "",
 				Gohlayed:       true,
 			},
@@ -44,7 +44,7 @@ func TestParseHeaders(t *testing.T) {
 			},
 			want: GohlayedMeta{
 				DeliveryTime:   0,
-				Delivered:    true,
+				DeliveredMsg:    true,
 				DeliveryKey: "9-1234567890",
 				Gohlayed:       true,
 			},
@@ -56,8 +56,8 @@ func TestParseHeaders(t *testing.T) {
 			if got.DeliveryTime != tt.want.DeliveryTime {
 				t.Errorf("ParseHeaders() got.DeliveryTime = %v, want %v", got.DeliveryTime, tt.want.DeliveryTime)
 			}
-			if got.Delivered != tt.want.Delivered {
-				t.Errorf("ParseHeaders() got.Delivered = %v, want %v", got.Delivered, tt.want.Delivered)
+			if got.DeliveredMsg != tt.want.DeliveredMsg {
+				t.Errorf("ParseHeaders() got.Delivered = %v, want %v", got.DeliveredMsg, tt.want.DeliveredMsg)
 			}
 			if got.DeliveryKey != tt.want.DeliveryKey {
 				t.Errorf("ParseHeaders() got.DeliveryKey = %v, want %v", got.DeliveryKey, tt.want.DeliveryKey)
