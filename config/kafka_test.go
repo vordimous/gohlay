@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func Test_getBootrapServersString(t *testing.T) {
+func Test_bootrapServersString(t *testing.T) {
 	tests := []struct {
 		name              string
 		want              string
@@ -28,14 +28,14 @@ func Test_getBootrapServersString(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			viper.Set("bootstrap_servers", tt.bootstrap_servers)
-			if got := getBootrapServersString(); got != tt.want {
-				t.Errorf("getBootrapServersString() = %v, want %v", got, tt.want)
+			if got := bootrapServersString(); got != tt.want {
+				t.Errorf("bootrapServersString() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestGetConsumer(t *testing.T) {
+func TestConsumer(t *testing.T) {
 	tests := []struct {
 		name              string
 		bootstrap_servers []string
@@ -67,15 +67,15 @@ func TestGetConsumer(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			viper.Set("bootstrap_servers", tt.bootstrap_servers)
-			gotConfig := GetConsumer()
+			gotConfig := Consumer()
 			if !reflect.DeepEqual(gotConfig, tt.wantConfig) {
-				t.Errorf("GetConsumer() gotConfig = %v, want %v", gotConfig, tt.wantConfig)
+				t.Errorf("Consumer() gotConfig = %v, want %v", gotConfig, tt.wantConfig)
 			}
 		})
 	}
 }
 
-func TestGetProducer(t *testing.T) {
+func TestProducer(t *testing.T) {
 	tests := []struct {
 		name              string
 		bootstrap_servers []string
@@ -99,8 +99,8 @@ func TestGetProducer(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			viper.Set("bootstrap_servers", tt.bootstrap_servers)
-			if gotConfig := GetProducer(); !reflect.DeepEqual(gotConfig, tt.wantConfig) {
-				t.Errorf("GetProducer() = %v, want %v", gotConfig, tt.wantConfig)
+			if gotConfig := Producer(); !reflect.DeepEqual(gotConfig, tt.wantConfig) {
+				t.Errorf("Producer() = %v, want %v", gotConfig, tt.wantConfig)
 			}
 		})
 	}

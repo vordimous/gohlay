@@ -15,7 +15,7 @@ import (
 
 // CheckForDeliveries will scan the topic and build a map of messages to be delivered
 func CheckForDeliveries() (found []*Finder) {
-	for _, topic := range config.GetTopics() {
+	for _, topic := range config.Topics() {
 		f := &Finder{
 			topic: topic,
 		}

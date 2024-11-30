@@ -13,7 +13,8 @@ import (
 
 // HandleDeliveries produces the gohlayed kafka messages
 func HandleDeliveries(topic string, deliveryKeyMap map[string]bool) {
-	p, err := kafka.NewProducer(config.GetProducer())
+	topicConfigMap := config.Producer()
+	p, err := kafka.NewProducer(&topicConfigMap)
 	if err != nil {
 		log.Fatal("Failed to create producer ", err)
 		os.Exit(1)
@@ -64,10 +65,10 @@ func (d *Deliverer) HandleMessage(msg *kafka.Message) string {
 
 	// replace the deadline header with the delivered header
 	for _, h := range msg.Headers {
-		if h.Key == config.GetHeaderOverride("GOHLAY") {
+		if h.Key == config.HeaderOverride("GOHLAY") {
 			headers = append(headers,
 				kafka.Header{
-					Key:   config.GetHeaderOverride("GOHLAY_DELIVERED"),
+					Key:   config.HeaderOverride("GOHLAY_DELIVERED"),
 					Value: []byte(deliveryKey),
 				})
 		} else {
