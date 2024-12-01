@@ -19,7 +19,7 @@ services:
     ports:
       - 9092:9092
     healthcheck:
-      test: /opt/bitnami/kafka/bin/kafka-cluster.sh cluster-id --bootstrap-server kafka:29092 || exit 1
+      test: /opt/bitnami/kafka/bin/kafka-cluster.sh cluster-id --bootstrap-server localhost:9092 || exit 1
       interval: 1s
       timeout: 60s
       retries: 60
