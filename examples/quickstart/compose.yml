@@ -8,7 +8,7 @@ services:
       kafka-data-init:
         condition: service_completed_successfully
     environment:
-      GOHLAY_BOOTSTRAP_SERVERS: kafka:29092
+      GOHLAY_BOOTSTRAP-SERVERS: kafka:29092
       GOHLAY_TOPICS: gohlay
       GOHLAY_VERBOSE: true
     command: run
