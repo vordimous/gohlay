@@ -69,17 +69,16 @@ func (f *Finder) HandleMessage(msg *kafka.Message) string {
 	deadline := viper.GetInt64("deadline")
 	deliveryTime := gohlayedMeta.DeliveryTime
 	if deliveryTime > deadline {
-		delete(f.gohlayedMessages, deliveryKey) // remove the message so that it won't be delivered
 		return fmt.Sprintf("message not ready for delivery: %d-%s %d", msg.TopicPartition.Offset, msg.Key, deliveryTime-deadline)
 	}
 
 	if gohlayedMeta.DeliveredMsg || gohlayedMeta.DeliveryKey != "" || f.gohlayedMessages[gohlayedMeta.DeliveryKey] {
-		f.gohlayedMessages[gohlayedMeta.DeliveryKey] = true
+		delete(f.gohlayedMessages, gohlayedMeta.DeliveryKey) // remove the message that is already delivered
 		return fmt.Sprintf("message already delivered: %d-%s %s", msg.TopicPartition.Offset, msg.Key, gohlayedMeta.DeliveryKey)
 	}
 
 	f.gohlayedMessages[deliveryKey] = false // set key to be delivered with a delivery value of false
-	log.Infof("Setting message for delivery: %d %d-%s %s", msg.TopicPartition.Partition, msg.TopicPartition.Offset, msg.Key, deliveryKey)
+	log.Debugf("Setting message for delivery: %d %d-%s %s", msg.TopicPartition.Partition, msg.TopicPartition.Offset, msg.Key, deliveryKey)
 	return ""
 }
 
