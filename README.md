@@ -26,12 +26,40 @@ Run Gohlay in a container:
 docker run --rm ghcr.io/vordimous/gohlay --help
 ```
 
+```text
+Gohlay is a delayed delivery tool for producing messages onto
+Kafka topics on a schedule set by a Kafka message header.
+
+Usage:
+  gohlay [flags]
+  gohlay [command]
+
+Available Commands:
+  check       Check for gohlayed messages that are past the deadline
+  completion  Generate the autocompletion script for the specified shell
+  help        Help about any command
+  run         Check for gohlayed messages and deliver them.
+
+Flags:
+  -b, --bootstrap-servers stringArray                          Sets the "bootstrap.servers" property in the kafka.ConfigMap (default [localhost:9092])
+      --config-dir string                                      config file directory. (default ".")
+  -d, --deadline int                                           Sets the delivery deadline. (Format: Unix Timestamp) (default 1733013640995)
+      --debug                                                  Display debugging output in the console.
+  -h, --help                                                   help for gohlay
+      --json                                                   Display output in the console as JSON.
+  -p, --kafka-properties property=value                        Sets the standard librdkafka configuration properties property=value documented in: https://github.com/confluentinc/librdkafka/tree/master/CONFIGURATION.md
+  -o, --override-headers default_header_name=new_header_name   Maps the name of default headers to a custom header default_header_name=new_header_name. ex: `GOHLAY=DELAY_TIME`
+      --silent                                                 Don't display output in the console.
+  -t, --topics stringArray                                     Sets the kafka topics to use (default [gohlay])
+  -v, --verbose 
+```
+
 ## Roadmap
 
 - [X] Config with flags, yaml, and Environment vars
 - [X] configurable header names
 - [ ] configurable group id
-- [ ] Kafka SASL auth
+- [X] Kafka SASL auth
 - [ ] Deliver to multiple topics
 - [ ] Use a configurable offset to start from
 - [ ] Deliver all message

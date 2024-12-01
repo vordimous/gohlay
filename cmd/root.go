@@ -49,8 +49,8 @@ var HeaderOverrides []string
 func init() {
 
 	// Dev
-	rootCmd.PersistentFlags().StringVar(&ConfigFileDir, "config_dir", ".", "config file directory.")
-	if err := viper.BindPFlag("config_dir", rootCmd.PersistentFlags().Lookup("config_dir")); err != nil { log.Error(err) }
+	rootCmd.PersistentFlags().StringVar(&ConfigFileDir, "config-dir", ".", "config file directory.")
+	if err := viper.BindPFlag("config-dir", rootCmd.PersistentFlags().Lookup("config-dir")); err != nil { log.Error(err) }
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "Display more verbose output in console output.")
 	if err := viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose")); err != nil { log.Error(err) }
 	rootCmd.PersistentFlags().BoolVar(&Debug, "debug", false, "Display debugging output in the console.")
@@ -65,14 +65,14 @@ func init() {
 	if err := viper.BindPFlag("deadline", rootCmd.PersistentFlags().Lookup("deadline")); err != nil { log.Error(err) }
 
 	// Kafka
-	rootCmd.PersistentFlags().StringArrayVarP(&BootstrapServers, "bootstrap_servers", "b", []string{"localhost:9092"}, "Sets the \"bootstrap.servers\" property in the kafka.ConfigMap")
-	if err := viper.BindPFlag("bootstrap_servers", rootCmd.PersistentFlags().Lookup("bootstrap_servers")); err != nil { log.Error(err) }
-	rootCmd.PersistentFlags().StringArrayVarP(&KafkaProperties, "kafka_properties", "p", []string{}, "Sets the standard librdkafka configuration properties `property=value` documented in: https://github.com/confluentinc/librdkafka/tree/master/CONFIGURATION.md")
-	if err := viper.BindPFlag("kafka_properties", rootCmd.PersistentFlags().Lookup("kafka_properties")); err != nil { log.Error(err) }
+	rootCmd.PersistentFlags().StringArrayVarP(&BootstrapServers, "bootstrap-servers", "b", []string{"localhost:9092"}, "Sets the \"bootstrap.servers\" property in the kafka.ConfigMap")
+	if err := viper.BindPFlag("bootstrap-servers", rootCmd.PersistentFlags().Lookup("bootstrap-servers")); err != nil { log.Error(err) }
+	rootCmd.PersistentFlags().StringArrayVarP(&KafkaProperties, "kafka-properties", "p", []string{}, "Sets the standard librdkafka configuration properties `property=value` documented in: https://github.com/confluentinc/librdkafka/tree/master/CONFIGURATION.md")
+	if err := viper.BindPFlag("kafka-properties", rootCmd.PersistentFlags().Lookup("kafka-properties")); err != nil { log.Error(err) }
 	rootCmd.PersistentFlags().StringArrayVarP(&Topics, "topics", "t", []string{"gohlay"}, "Sets the kafka topics to use")
 	if err := viper.BindPFlag("topics", rootCmd.PersistentFlags().Lookup("topics")); err != nil { log.Error(err) }
-	rootCmd.PersistentFlags().StringArrayVarP(&HeaderOverrides, "override_headers", "o", []string{}, "Maps the name of default headers to a custom header `default_header_name=new_value`. ex: `GOHLAY=DELAY_TIME`")
-	if err := viper.BindPFlag("override_headers", rootCmd.PersistentFlags().Lookup("override_headers")); err != nil { log.Error(err) }
+	rootCmd.PersistentFlags().StringArrayVarP(&HeaderOverrides, "override-headers", "o", []string{}, "Maps the name of default headers to a custom header `default_header_name=new_header_name`. ex: `GOHLAY=DELAY_TIME`")
+	if err := viper.BindPFlag("override-headers", rootCmd.PersistentFlags().Lookup("override-headers")); err != nil { log.Error(err) }
 }
 
 

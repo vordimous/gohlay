@@ -29,21 +29,21 @@ func readKafkaConfig() {
 
 	topics = viper.GetStringSlice("topics")
 
-	for _, kv := range viper.GetStringSlice("override_headers") {
+	for _, kv := range viper.GetStringSlice("override-headers") {
 		p := strings.Split(kv, "=")
 		if len(p) == 2 {
 			overrideMap[p[0]] = p[1]
 		}
 	}
 
-	for _, settingKV := range viper.GetStringSlice("kafka_properties") {
+	for _, settingKV := range viper.GetStringSlice("kafka-properties") {
 		p := strings.Split(settingKV, "=")
 		if len(p) == 2 {
 			kafkaSettingsMap[p[0]] = p[1]
 		}
 	}
 
-	bootrapServersString = strings.Join(viper.GetStringSlice("bootstrap_servers"), ",")
+	bootrapServersString = strings.Join(viper.GetStringSlice("bootstrap-servers"), ",")
 	kafkaSettingsMap["bootstrap.servers"] = bootrapServersString
 }
 

@@ -11,12 +11,12 @@ import (
 func TestConsumer(t *testing.T) {
 	tests := []struct {
 		name              string
-		bootstrap_servers []string
+		bootstrapServers []string
 		wantConfig        kafka.ConfigMap
 	}{
 		{
 			name:              "Test single server and topic",
-			bootstrap_servers: []string{"localhost:9092"},
+			bootstrapServers: []string{"localhost:9092"},
 			wantConfig: kafka.ConfigMap{
 				"bootstrap.servers":               "localhost:9092",
 				"go.application.rebalance.enable": true,
@@ -27,7 +27,7 @@ func TestConsumer(t *testing.T) {
 		},
 		{
 			name:              "Test multiple servers and topics",
-			bootstrap_servers: []string{"localhost:9092", "localhost:9093"},
+			bootstrapServers: []string{"localhost:9092", "localhost:9093"},
 			wantConfig: kafka.ConfigMap{
 				"bootstrap.servers":               "localhost:9092,localhost:9093",
 				"go.application.rebalance.enable": true,
@@ -39,7 +39,7 @@ func TestConsumer(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			viper.Set("bootstrap_servers", tt.bootstrap_servers)
+			viper.Set("bootstrap-servers", tt.bootstrapServers)
 			readKafkaConfig()
 			gotConfig := Consumer()
 			if !reflect.DeepEqual(gotConfig, tt.wantConfig) {
@@ -52,19 +52,19 @@ func TestConsumer(t *testing.T) {
 func TestProducer(t *testing.T) {
 	tests := []struct {
 		name              string
-		bootstrap_servers []string
+		bootstrapServers []string
 		wantConfig        kafka.ConfigMap
 	}{
 		{
 			name:              "Test single server and topic",
-			bootstrap_servers: []string{"localhost:9092"},
+			bootstrapServers: []string{"localhost:9092"},
 			wantConfig: kafka.ConfigMap{
 				"bootstrap.servers": "localhost:9092",
 			},
 		},
 		{
 			name:              "Test multiple servers and topics",
-			bootstrap_servers: []string{"localhost:9092", "localhost:9093"},
+			bootstrapServers: []string{"localhost:9092", "localhost:9093"},
 			wantConfig: kafka.ConfigMap{
 				"bootstrap.servers": "localhost:9092,localhost:9093",
 			},
@@ -72,7 +72,7 @@ func TestProducer(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			viper.Set("bootstrap_servers", tt.bootstrap_servers)
+			viper.Set("bootstrap-servers", tt.bootstrapServers)
 			readKafkaConfig()
 			if gotConfig := Producer(); !reflect.DeepEqual(gotConfig, tt.wantConfig) {
 				t.Errorf("Producer() gotConfig = %v, want %v", gotConfig, tt.wantConfig)

@@ -1,6 +1,6 @@
-# Quickstart
+# Kafka Properties
 
-This quickstart will demonstrate how producers can send delayed messages using the Gohlay header. The first message will be deliver immediately and the second message will deliver after 1 minute.
+This example uses custom kafka authentication options to demonstrate how producers can send delayed messages using the Gohlay header. The first message will be deliver immediately and the second message will deliver after 1 minute.
 
 ## run
 
@@ -22,6 +22,10 @@ Kafka is setup and the Gohlay service has executed once and did not find any goh
 echo '{"id":200000,"message":"Hello, Future Gohlay"}' | docker compose exec -T kafkacat \
   kafkacat -P \
     -b kafka:29092 \
+    -X security.protocol=SASL_PLAINTEXT \
+    -X sasl.username=user \
+    -X sasl.password=bitnami \
+    -X sasl.mechanism=PLAIN \
     -k "wait1min" \
     -t gohlay \
     -H GOHLAY="$(date -v +1M)"

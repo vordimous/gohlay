@@ -43,7 +43,7 @@ func readConfig() {
 	viper.SetConfigName("gohlay")
 	viper.AddConfigPath("/etc/gohlay/")
 	viper.AddConfigPath("$HOME/.gohlay")
-	viper.AddConfigPath(viper.GetString("config_dir"))
+	viper.AddConfigPath(viper.GetString("config-dir"))
 	err := viper.ReadInConfig()
 	if err != nil {
 		log.Infof("Optional %v", err)
