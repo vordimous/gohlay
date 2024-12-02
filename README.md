@@ -1,12 +1,12 @@
 # Gohlay
 
-The Kafka delayed message delivery tool.
+The Kafka message scheduling tool.
 
-![gopher](gohlay_gopher.png)
+<img src="gohlay_gopher.png" width="360" height="360" alt="Gohlay" />
 
-Gohlay is a simple CLI tool that can produce messages on Kafka topics after a deadline set by a header on the message. This allows the original message producer to communicate a desired execution time for a consumer. Gohlay will republish the message exactly as it was sent, removing the deadline header. A consumer will get the updated message and act on it. Gohlay is a low-impact tool to add delayed/scheduled messages to a Kafka workflow.
+Gohlay is a low-impact tool to add scheduled messages to a Kafka workflow. It is a simple CLI tool that reproduces messages on Kafka topics after a delivery time set by a header on the message. This allows the original message producer to communicate a desired execution time for a consumer. Gohlay will republish the message exactly as it was sent, removing the delivery time header. A consumer will get the updated message and can decide to act on it. 
 
-Gohlay gives power to both the Producer and Consumer because it doesn't prevent either from acting normally. The Producer can send any messages without a deadline header, and the Consumer can choose to ignore the deadline header.
+Gohlay doesn't prevent either the Producer or Consumer from acting normally. The Producer can send any messages without a delivery time header, and the Consumer can choose to ignore the delivery time header.
 
 ## Try it out
 
@@ -84,13 +84,15 @@ With both messages on the same topic, Gohlay can determine that a message has al
 ## Roadmap
 
 - [X] Config with flags, yaml, and Environment vars
-- [X] configurable header names
-- [ ] configurable group id
+- [X] A configurable header names
+- [ ] A configurable group id
 - [X] Kafka SASL auth
 - [ ] Deliver to multiple topics
   - [ ] from cli arg
   - [ ] from message header
 - [ ] Use a configurable offset to start from
+- [ ] Support relative times (ex: "+ 30 min")
 - [ ] Deliver all messages
 - [ ] Native CRON trigger
 - [ ] Tested Kafka 2.x and 3.x support
+- [ ] More install options
