@@ -59,7 +59,7 @@ Flags:
 Gohlay will scan the configured Kafka topic and look for messages with the `GOHLAY` header. It checks the delivery time in the header and ignores any messages with a delivery time later than the configured deadline. Gohlay finishes a full scan of the topic and stores only a pointer to any deliverable messages.
 
 ```mermaid
-%%{inaren't 'gitGraph': {'showCommitLabel':true,'mainBranchName': 'Gohlay'}} }%%
+%%{init: { 'gitGraph': {'showCommitLabel':true,'mainBranchName': 'Gohlay'}} }%%
 gitGraph
  commit
  commit
