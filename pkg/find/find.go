@@ -8,14 +8,14 @@ import (
 	kafka "github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"github.com/vordimous/gohlay/config"
+	"github.com/vordimous/gohlay/configs"
 	"github.com/vordimous/gohlay/internal"
-	"github.com/vordimous/gohlay/kafkautil"
+	"github.com/vordimous/gohlay/internal/kafkautil"
 )
 
 // CheckForDeliveries will scan the topic and build a map of messages to be delivered
 func CheckForDeliveries() (found []*Finder) {
-	for _, topic := range config.Topics() {
+	for _, topic := range configs.Topics() {
 		f := &Finder{
 			topic: topic,
 		}
@@ -55,7 +55,7 @@ func (f *Finder) GroupName() string {
 
 // HandleMessage index any gohlayed message with a delivery time passed the deadline
 func (f *Finder) HandleMessage(msg *kafka.Message) string {
-	gohlayedMeta, err := kafkautil.ParseHeaders(msg.Headers)
+	gohlayedMeta, err := kafkautil.ParseHeaders(&msg.Headers)
 	if err != nil {
 		return fmt.Sprintf("could't parse headers: %v", err)
 	}

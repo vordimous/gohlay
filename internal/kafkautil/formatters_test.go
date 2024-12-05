@@ -38,7 +38,7 @@ func TestFmtDeliveryKey(t *testing.T) {
 func TestFmtKafkaGroup(t *testing.T) {
 	type args struct {
 		groupName string
-		topic  string
+		topic     string
 	}
 	tests := []struct {
 		name     string
@@ -50,7 +50,7 @@ func TestFmtKafkaGroup(t *testing.T) {
 			name: "Correct Format",
 			args: args{
 				groupName: "test",
-				topic:  "aTopic",
+				topic:     "aTopic",
 			},
 			deadline: 12345,
 			want:     "group.id=gohlay_test:aTopic:12345",

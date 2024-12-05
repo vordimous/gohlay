@@ -29,9 +29,9 @@ func TestDeliverer_HandleMessage(t *testing.T) {
 			args: args{
 				msg: &kafka.Message{
 					TopicPartition: kafka.TopicPartition{
-						Topic: &topic,
+						Topic:     &topic,
 						Partition: 9,
-						Offset: 9,
+						Offset:    9,
 					},
 				},
 			},
@@ -40,16 +40,16 @@ func TestDeliverer_HandleMessage(t *testing.T) {
 		{
 			name: "Already Delivered Header",
 			d: &Deliverer{
-				topic: topic,
+				topic:          topic,
 				deliveryKeyMap: map[string]bool{},
-				producer: &kafka.Producer{},
+				producer:       &kafka.Producer{},
 			},
 			args: args{
 				msg: &kafka.Message{
 					TopicPartition: kafka.TopicPartition{
-						Topic: &topic,
+						Topic:     &topic,
 						Partition: 9,
-						Offset: 9,
+						Offset:    9,
 					},
 					Headers: []kafka.Header{
 						{
@@ -73,9 +73,9 @@ func TestDeliverer_HandleMessage(t *testing.T) {
 			args: args{
 				msg: &kafka.Message{
 					TopicPartition: kafka.TopicPartition{
-						Topic: &topic,
+						Topic:     &topic,
 						Partition: 9,
-						Offset: 9,
+						Offset:    9,
 					},
 					Headers: []kafka.Header{
 						{

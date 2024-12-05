@@ -6,31 +6,31 @@ import (
 
 	kafka "github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	log "github.com/sirupsen/logrus"
-	"github.com/vordimous/gohlay/config"
+	"github.com/vordimous/gohlay/configs"
 	"github.com/vordimous/gohlay/internal"
-	"github.com/vordimous/gohlay/kafkautil"
+	"github.com/vordimous/gohlay/internal/kafkautil"
 )
 
 // HandleDeliveries produces the gohlayed kafka messages
 func HandleDeliveries(topic string, deliveryKeyMap map[string]bool) {
-	topicConfigMap := config.Producer()
+	topicConfigMap := configs.Producer()
 	p, err := kafka.NewProducer(&topicConfigMap)
 	if err != nil {
 		log.Fatal("Failed to create producer ", err)
 		os.Exit(1)
 	}
 	d := &Deliverer{
-		topic: topic,
-		producer: p,
+		topic:          topic,
+		producer:       p,
 		deliveryKeyMap: deliveryKeyMap,
 	}
 	d.doDeliveries()
 }
 
 type Deliverer struct {
-	topic string
+	topic          string
 	deliveryKeyMap map[string]bool
-	producer *kafka.Producer
+	producer       *kafka.Producer
 }
 
 // TopicName is the name of the kafka topic
@@ -45,7 +45,7 @@ func (d *Deliverer) GroupName() string {
 
 // HandleMessage will deliver any gohlayed message that isn't already delivered
 func (d *Deliverer) HandleMessage(msg *kafka.Message) string {
-	gohlayedMeta, err := kafkautil.ParseHeaders(msg.Headers)
+	gohlayedMeta, err := kafkautil.ParseHeaders(&msg.Headers)
 	if err != nil {
 		return fmt.Sprintf("could't parse headers: %v", err)
 	}
@@ -66,10 +66,10 @@ func (d *Deliverer) HandleMessage(msg *kafka.Message) string {
 
 	// replace the deadline header with the delivered header
 	for _, h := range msg.Headers {
-		if h.Key == config.HeaderOverride("GOHLAY") {
+		if h.Key == configs.HeaderOverride("GOHLAY") {
 			headers = append(headers,
 				kafka.Header{
-					Key:   config.HeaderOverride("GOHLAY_DELIVERED"),
+					Key:   configs.HeaderOverride("GOHLAY_DELIVERED"),
 					Value: []byte(deliveryKey),
 				})
 		} else {

@@ -2,9 +2,9 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/vordimous/gohlay/config"
-	"github.com/vordimous/gohlay/deliver"
-	"github.com/vordimous/gohlay/find"
+	"github.com/vordimous/gohlay/configs"
+	"github.com/vordimous/gohlay/pkg/deliver"
+	"github.com/vordimous/gohlay/pkg/find"
 )
 
 // runCmd represents the run command
@@ -14,7 +14,7 @@ var runCmd = &cobra.Command{
 	Long: `Perform a check on the configured topics and deliver any
 messages that are past the deadline.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		config.Load()
+		configs.Load()
 		for _, f := range find.CheckForDeliveries() {
 			deliver.HandleDeliveries(f.TopicName(), f.GohlayedMap())
 		}

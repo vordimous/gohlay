@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/vordimous/gohlay/config"
-	"github.com/vordimous/gohlay/find"
+	"github.com/vordimous/gohlay/configs"
+	"github.com/vordimous/gohlay/pkg/find"
 )
 
 // checkCmd represents the check command
@@ -20,7 +20,7 @@ Example Output:
 ["8-1731612338","9-1731614359","10-1731614360","11-1731614361"]
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		config.Load()
+		configs.Load()
 		results := []CheckResult{}
 		for _, f := range find.CheckForDeliveries() {
 			r := CheckResult{
