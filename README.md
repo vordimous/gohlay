@@ -27,7 +27,7 @@ docker run --rm ghcr.io/vordimous/gohlay --help
 ```
 
 ```text
-Gohlay is a delayed delivery tool for producing messages onto
+Gohlay is a message scheduling tool for producing messages onto
 Kafka topics on a schedule set by a Kafka message header.
 
 Usage:
@@ -98,13 +98,10 @@ With both messages on the same topic, Gohlay can determine that a message has al
 - [ ] Tested Kafka 2.x and 3.x support
 - [ ] More install options
 
-
 I built a Kafka message scheduling tool.
 
 https://github.com/vordimous/gohlay
 
-This has been a side/passion project on my back burner for too long and I finally had the time to polish it up enough for community feedback. The idea came from a discussion around a business need. I am not sure how much this feature is needed in other Kafka workflows but it works. I hope someone can find it useful.
+Gohlay has been a side/passion project on my back burner for too long, and I finally had the time to polish it up enough for community feedback. The idea came from a discussion around a business need. I am curious how this tool could be used in other Kafka workflows. I had fun writing it; if someone finds it useful, that is a win-win.
 
 Any feedback or ideas for improvement are welcome!
-
-
