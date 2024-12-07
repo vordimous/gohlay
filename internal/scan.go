@@ -55,7 +55,7 @@ func ScanTopic(handler MessageHandler) {
 
 	partitions := []int32{}
 	if metadata, err := c.GetMetadata(&topic, false, 100); err != nil {
-		log.Warning("Failed to get Partitions, using partition 0", err)
+		log.Warning("Failed to get Partitions, using partition 0 ", err)
 		partitions = append(partitions, 0)
 	} else {
 		for _, p := range metadata.Topics[topic].Partitions {
@@ -68,7 +68,7 @@ func ScanTopic(handler MessageHandler) {
 			Topic:     &topic,
 			Partition: partition,
 		})
-		partitionOffsets[partition] = maxOffset
+		partitionOffsets[partition] = 0
 	}
 	if len(topicPartitions) == 0 {
 		log.Infof("No partitions found for topic: %s", topic)
