@@ -4,9 +4,22 @@ The Kafka message scheduling tool.
 
 <img src="gohlay_gopher.png" width="360" height="360" alt="Gohlay" />
 
-Gohlay is a low-impact tool to add scheduled messages to a Kafka workflow. It is a simple CLI tool that reproduces messages on Kafka topics after a delivery time set by a header on the message. This allows the original message producer to communicate a desired execution time for a consumer. Gohlay will republish the message exactly as it was sent, removing the delivery time header. A consumer will get the updated message and can decide to act on it. 
+Gohlay is a low-impact tool to add scheduled messages to a Kafka workflow. It is a simple CLI tool that reproduces messages on Kafka topics after a delivery time set by a header on the message. This allows the original message producer to communicate a desired execution time for a consumer. Gohlay will republish the message exactly as it was sent, removing the delivery time header. A consumer will get the updated message and can decide to act on it.
 
 Gohlay doesn't prevent either the Producer or Consumer from acting normally. The Producer can send any messages without a delivery time header, and the Consumer can choose to ignore the delivery time header.
+
+Benefits:
+
+- Lightweight and low memory usage. Gohlay only reads the message metadata.
+- Run it on a cron or scheduled containers. The more frequently Gohlay is run the closer to the scheduled time the message will be delivered.
+- A full run only takes ~3s even for large topics, kafka connection times take the longest.
+- Fault tolerant. If Gohlay is interrupted a new run will pick up any undelivered messages.
+
+Gohlay topic:
+
+- Can be log compacted to reduce extra processing.
+- Topic retention policy dictates how long scheduled messages are allowed to be delivered
+- Number of partitions and rebalanced doesn't affect Gohlay
 
 ## Try it out
 
