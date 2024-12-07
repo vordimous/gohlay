@@ -1,4 +1,4 @@
-package config
+package configs
 
 import (
 	"os"
@@ -46,7 +46,7 @@ func readConfig() {
 	viper.AddConfigPath(viper.GetString("config-dir"))
 	err := viper.ReadInConfig()
 	if err != nil {
-		log.Infof("Optional %v", err)
+		log.Debugf("Optional %v", err)
 	}
 }
 

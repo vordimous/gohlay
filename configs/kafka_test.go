@@ -1,4 +1,4 @@
-package config
+package configs
 
 import (
 	"reflect"
@@ -10,12 +10,12 @@ import (
 
 func TestConsumer(t *testing.T) {
 	tests := []struct {
-		name              string
+		name             string
 		bootstrapServers []string
-		wantConfig        kafka.ConfigMap
+		wantConfig       kafka.ConfigMap
 	}{
 		{
-			name:              "Test single server and topic",
+			name:             "Test single server and topic",
 			bootstrapServers: []string{"localhost:9092"},
 			wantConfig: kafka.ConfigMap{
 				"bootstrap.servers":               "localhost:9092",
@@ -26,7 +26,7 @@ func TestConsumer(t *testing.T) {
 			},
 		},
 		{
-			name:              "Test multiple servers and topics",
+			name:             "Test multiple servers and topics",
 			bootstrapServers: []string{"localhost:9092", "localhost:9093"},
 			wantConfig: kafka.ConfigMap{
 				"bootstrap.servers":               "localhost:9092,localhost:9093",
@@ -51,19 +51,19 @@ func TestConsumer(t *testing.T) {
 
 func TestProducer(t *testing.T) {
 	tests := []struct {
-		name              string
+		name             string
 		bootstrapServers []string
-		wantConfig        kafka.ConfigMap
+		wantConfig       kafka.ConfigMap
 	}{
 		{
-			name:              "Test single server and topic",
+			name:             "Test single server and topic",
 			bootstrapServers: []string{"localhost:9092"},
 			wantConfig: kafka.ConfigMap{
 				"bootstrap.servers": "localhost:9092",
 			},
 		},
 		{
-			name:              "Test multiple servers and topics",
+			name:             "Test multiple servers and topics",
 			bootstrapServers: []string{"localhost:9092", "localhost:9093"},
 			wantConfig: kafka.ConfigMap{
 				"bootstrap.servers": "localhost:9092,localhost:9093",

@@ -8,12 +8,12 @@ import (
 
 	kafka "github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	log "github.com/sirupsen/logrus"
-	"github.com/vordimous/gohlay/config"
-	"github.com/vordimous/gohlay/kafkautil"
+	"github.com/vordimous/gohlay/configs"
+	"github.com/vordimous/gohlay/internal/kafkautil"
 )
 
 var (
-	sigchan chan os.Signal
+	sigchan   chan os.Signal
 	maxOffset kafka.Offset
 )
 
@@ -32,7 +32,7 @@ type MessageHandler interface {
 
 // ScanTopic creates a unique consumer that reads all messages on the topics
 func ScanTopic(handler MessageHandler) {
-	topicConfigMap := config.Consumer()
+	topicConfigMap := configs.Consumer()
 	topic := handler.TopicName()
 	partitionOffsets := map[int32]kafka.Offset{}
 
@@ -55,7 +55,7 @@ func ScanTopic(handler MessageHandler) {
 
 	partitions := []int32{}
 	if metadata, err := c.GetMetadata(&topic, false, 100); err != nil {
-		log.Warning("Failed to get Partitions, using partition 0", err)
+		log.Warning("Failed to get Partitions, using partition 0 ", err)
 		partitions = append(partitions, 0)
 	} else {
 		for _, p := range metadata.Topics[topic].Partitions {
@@ -68,7 +68,7 @@ func ScanTopic(handler MessageHandler) {
 			Topic:     &topic,
 			Partition: partition,
 		})
-		partitionOffsets[partition] = maxOffset
+		partitionOffsets[partition] = 0
 	}
 	if len(topicPartitions) == 0 {
 		log.Infof("No partitions found for topic: %s", topic)
@@ -103,7 +103,7 @@ func ScanTopic(handler MessageHandler) {
 				delete(partitionOffsets, e.Partition)
 
 				// stop scanning once all partitions have reached the end
-				if(len(partitionOffsets) == 0) {
+				if len(partitionOffsets) == 0 {
 					run = false
 				}
 			case kafka.RevokedPartitions:
@@ -113,7 +113,7 @@ func ScanTopic(handler MessageHandler) {
 				}
 
 				// stop scanning once all partitions have reached the end
-				if(len(partitionOffsets) == 0) {
+				if len(partitionOffsets) == 0 {
 					run = false
 				}
 			case kafka.Error:
