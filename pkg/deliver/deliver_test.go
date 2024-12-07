@@ -4,6 +4,9 @@ import (
 	"testing"
 
 	kafka "github.com/confluentinc/confluent-kafka-go/v2/kafka"
+	"github.com/spf13/viper"
+	"github.com/vordimous/gohlay/configs"
+	"github.com/vordimous/gohlay/pkg/find"
 )
 
 func TestDeliverer_HandleMessage(t *testing.T) {
@@ -92,6 +95,28 @@ func TestDeliverer_HandleMessage(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.d.HandleMessage(tt.args.msg); got != tt.want {
 				t.Errorf("Deliverer.HandleMessage() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func BenchmarkDeliverTopic(b *testing.B) {
+	benchmarks := []struct {
+		name string
+	}{
+		{
+			name: "Run",
+		},
+	}
+	viper.Set("bootstrap-servers", "localhost:9092")
+	viper.Set("topics", "gohlay")
+	configs.Load()
+	for _, bm := range benchmarks {
+		b.ReportAllocs()
+		b.ResetTimer()
+		b.Run(bm.name, func(b *testing.B) {
+			for _, f := range find.CheckForDeliveries() {
+				HandleDeliveries(f.TopicName(), f.GohlayedMap())
 			}
 		})
 	}
