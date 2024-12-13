@@ -1,0 +1,130 @@
+name: gohlay-high-load
+services:
+
+  gohlay:
+    image: ghcr.io/vordimous/gohlay
+    restart: unless-stopped
+    depends_on:
+      kafka-data-init:
+        condition: service_completed_successfully
+    environment:
+      GOHLAY_BOOTSTRAP-SERVERS: kafka:29092
+      GOHLAY_TOPICS: gohlay
+    command: run
+
+  kafka:
+    image: bitnami/kafka:3.9
+    restart: unless-stopped
+    ports:
+      - 9092:9092
+    healthcheck:
+      test: /opt/bitnami/kafka/bin/kafka-cluster.sh cluster-id --bootstrap-server localhost:9092 || exit 1
+      interval: 1s
+      timeout: 60s
+      retries: 60
+    environment:
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+      KAFKA_CFG_NODE_ID: "1"
+      KAFKA_CFG_BROKER_ID: "1"
+      KAFKA_CFG_GROUP_INITIAL_REBALANCE_DELAY_MS: "0"
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "1@127.0.0.1:9093"
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: "CLIENT:PLAINTEXT,INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT"
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_CFG_LOG_DIRS: "/tmp/logs"
+      KAFKA_CFG_PROCESS_ROLES: "broker,controller"
+      KAFKA_CFG_LISTENERS: "CLIENT://:9092,INTERNAL://:29092,CONTROLLER://:9093"
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: "INTERNAL"
+      KAFKA_CFG_ADVERTISED_LISTENERS: "CLIENT://localhost:9092,INTERNAL://kafka:29092"
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+  kafka-init:
+    image: bitnami/kafka:3.9
+    user: root
+    depends_on:
+      kafka:
+        condition: service_healthy
+        restart: true
+    deploy:
+      restart_policy:
+        condition: none
+        max_attempts: 0
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo -e "Creating kafka topic";
+        /opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic gohlay --partitions 3 --config cleanup.policy=compact
+        echo -e "Successfully created the following topics:";
+        /opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --list;
+
+  kafkacat:
+    image: confluentinc/cp-kafkacat:7.1.9
+    command: "bash"
+    stdin_open: true
+    tty: true
+
+  kafka-data-init:
+    image: confluentinc/cp-kafkacat:7.1.9
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        for i in {1..100}
+        do
+          echo "$$i/a" | kafkacat -P \
+            -b kafka:29092 \
+            -k "$$i/a" \
+            -t gohlay \
+            -H GOHLAY="$(date -u -d "+$$i seconds")"
+          echo "$$i/b" | kafkacat -P \
+            -b kafka:29092 \
+            -k "$$i/b" \
+            -t gohlay \
+            -H GOHLAY="$(date -u -d "+$$i seconds")"
+          echo "$$i/c" | kafkacat -P \
+            -b kafka:29092 \
+            -k "$$i/c" \
+            -t gohlay \
+            -H GOHLAY="$(date -u -d "+$$i seconds")"
+          echo "$$i/d" | kafkacat -P \
+            -b kafka:29092 \
+            -k "$$i/d" \
+            -t gohlay \
+            -H GOHLAY="$(date -u -d "+$$i seconds")"
+          echo "$$i/e" | kafkacat -P \
+            -b kafka:29092 \
+            -k "$$i/e" \
+            -t gohlay \
+            -H GOHLAY="$(date -u -d "+$$i seconds")"
+          echo "$$i/f" | kafkacat -P \
+            -b kafka:29092 \
+            -k "$$i/f" \
+            -t gohlay \
+            -H GOHLAY="$(date -u -d "+$$i seconds")"
+          echo "$$i/g" | kafkacat -P \
+            -b kafka:29092 \
+            -k "$$i/g" \
+            -t gohlay \
+            -H GOHLAY="$(date -u -d "+$$i seconds")"
+          echo "$$i/h" | kafkacat -P \
+            -b kafka:29092 \
+            -k "$$i/h" \
+            -t gohlay \
+            -H GOHLAY="$(date -u -d "+$$i seconds")"
+          echo "$$i/h" | kafkacat -P \
+            -b kafka:29092 \
+            -k "$$i/h" \
+            -t gohlay \
+            -H GOHLAY="$(date -u -d "+$$i seconds")"
+          echo "$$i/i" | kafkacat -P \
+            -b kafka:29092 \
+            -k "$$i/i" \
+            -t gohlay \
+            -H GOHLAY="$(date -u -d "+$$i seconds")"
+          echo "$$i/j" | kafkacat -P \
+            -b kafka:29092 \
+            -k "$$i/j" \
+            -t gohlay \
+            -H GOHLAY="$(date -u -d "+$$i seconds")"
+        done
