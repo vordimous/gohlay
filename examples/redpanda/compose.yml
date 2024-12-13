@@ -1,0 +1,102 @@
+name: gohlay-quickstart
+services:
+
+  gohlay:
+    image: ghcr.io/vordimous/gohlay
+    restart: unless-stopped
+    depends_on:
+      redpanda-data-init:
+        condition: service_completed_successfully
+    environment:
+      GOHLAY_BOOTSTRAP-SERVERS: redpanda:29092
+      GOHLAY_TOPICS: gohlay
+      GOHLAY_VERBOSE: true
+    command: run
+
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.2.4
+    command:
+      - redpanda
+      - start
+      - --kafka-addr internal://0.0.0.0:29092,external://0.0.0.0:9092
+      - --advertise-kafka-addr internal://redpanda:29092,external://localhost:9092
+      - --pandaproxy-addr internal://0.0.0.0:28082,external://0.0.0.0:8082
+      - --advertise-pandaproxy-addr internal://redpanda:28082,external://localhost:8082
+      - --schema-registry-addr internal://0.0.0.0:28081,external://0.0.0.0:8081
+      - --rpc-addr redpanda:33145
+      - --advertise-rpc-addr redpanda:33145
+      - --mode dev-container
+      - --smp 1
+      - --default-log-level=info
+    ports:
+      - 8081:8081
+      - 8082:8082
+      - 9092:9092
+      - 9644:9644
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -E 'Healthy:.+true' || exit 1"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+  redpanda-init:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.2.4
+    depends_on:
+      redpanda:
+        condition: service_healthy
+    entrypoint: [ '/bin/sh', '-c' ]
+    environment:
+      REDPANDA_ADMIN: redpanda:9644
+      REDPANDA_BROKER: redpanda:29092
+    command: |
+      rpk topic create gohlay -p 3 -c cleanup.policy=compact --brokers $${REDPANDA_BROKER}
+
+  redpanda-console:
+    image: docker.redpanda.com/redpandadata/console:v2.3.6
+    entrypoint: /bin/sh
+    command: -c "echo \"$$CONSOLE_CONFIG_FILE\" > /tmp/config.yml; /app/console"
+    environment:
+      CONFIG_FILEPATH: /tmp/config.yml
+      CONSOLE_CONFIG_FILE: |
+        kafka:
+          brokers: ["redpanda:29092"]
+          schemaRegistry:
+            enabled: true
+            urls: ["http://redpanda:28081"]
+        redpanda:
+          adminApi:
+            enabled: true
+            urls: ["http://redpanda:9644"]
+        connect:
+          enabled: true
+          clusters:
+            - name: local-connect-cluster
+              url: http://connect:28083
+    ports:
+      - 8080:8080
+
+  kafkacat:
+    image: confluentinc/cp-kafkacat:7.1.9
+    command: "bash"
+    stdin_open: true
+    tty: true
+
+  redpanda-data-init:
+    image: confluentinc/cp-kafkacat:7.1.9
+    depends_on:
+      redpanda-init:
+        condition: service_completed_successfully
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo '{"id":200000,"message":"Hello, Gohlay"}' | kafkacat -P \
+          -b redpanda:29092 \
+          -k "now" \
+          -t gohlay \
+          -H GOHLAY="$(date -u)"
+
+        echo '{"id":200000,"message":"Hello, Future Gohlay"}' | kafkacat -P \
+          -b redpanda:29092 \
+          -k "future" \
+          -t gohlay \
+          -H GOHLAY="$(date -u -d "+30 seconds")"
