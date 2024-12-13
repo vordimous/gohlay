@@ -4,7 +4,13 @@ This example will demonstrate how producers can send delayed messages using the 
 
 ## run
 
-- start all of the components
+You can download and run this example with this script:
+
+```bash
+wget -qO- https://github.com/vordimous/gohlay/releases/latest/download/startup.sh | sh -s -- redpanda
+```
+
+Or run setup manually:
 
 ```bash
 ./setup.sh

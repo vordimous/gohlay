@@ -4,7 +4,13 @@ This example cam demonstrate how a large number of messages effects the run time
 
 ## run
 
-- start all of the components
+You can download and run this example with this script:
+
+```bash
+wget -qO- https://github.com/vordimous/gohlay/releases/latest/download/startup.sh | sh -s -- high-load
+```
+
+Or run setup manually:
 
 ```bash
 ./setup.sh

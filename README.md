@@ -29,6 +29,12 @@ Run the [Quickstart](./examples/quickstart/) compose example to see Gohlay in ac
 wget -qO- https://github.com/vordimous/gohlay/releases/latest/download/startup.sh | sh -
 ```
 
+or any of the [examples](./examples/) by the folder name:
+
+```bash
+wget -qO- https://github.com/vordimous/gohlay/releases/latest/download/startup.sh | sh -s -- folder-name
+```
+
 ## Install
 
 Download the binary for your OS from the [latest Gohlay release](https://github.com/vordimous/gohlay/releases/latest).

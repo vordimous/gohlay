@@ -4,7 +4,13 @@ This example uses custom kafka authentication options to demonstrate how produce
 
 ## run
 
-- start all of the components
+You can download and run this example with this script:
+
+```bash
+wget -qO- https://github.com/vordimous/gohlay/releases/latest/download/startup.sh | sh -s -- kafka-properties
+```
+
+Or run setup manually:
 
 ```bash
 ./setup.sh
