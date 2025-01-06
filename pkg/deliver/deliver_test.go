@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	kafka "github.com/confluentinc/confluent-kafka-go/v2/kafka"
+	"github.com/google/go-cmp/cmp"
 	"github.com/spf13/viper"
 	"github.com/vordimous/gohlay/configs"
 	"github.com/vordimous/gohlay/pkg/find"
@@ -93,7 +94,7 @@ func TestDeliverer_HandleMessage(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.d.HandleMessage(tt.args.msg); got != tt.want {
+			if got := tt.d.HandleMessage(tt.args.msg); !cmp.Equal(got, tt.want) {
 				t.Errorf("Deliverer.HandleMessage() = %v, want %v", got, tt.want)
 			}
 		})
