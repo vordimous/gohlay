@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	kafka "github.com/confluentinc/confluent-kafka-go/v2/kafka"
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestParseHeaders(t *testing.T) {
@@ -52,18 +53,8 @@ func TestParseHeaders(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, _ := ParseHeaders(&tt.args.headers)
-			if got.DeliveryTime != tt.want.DeliveryTime {
-				t.Errorf("ParseHeaders() got.DeliveryTime = %v, want %v", got.DeliveryTime, tt.want.DeliveryTime)
-			}
-			if got.DeliveredMsg != tt.want.DeliveredMsg {
-				t.Errorf("ParseHeaders() got.Delivered = %v, want %v", got.DeliveredMsg, tt.want.DeliveredMsg)
-			}
-			if got.DeliveryKey != tt.want.DeliveryKey {
-				t.Errorf("ParseHeaders() got.DeliveryKey = %v, want %v", got.DeliveryKey, tt.want.DeliveryKey)
-			}
-			if got.Gohlayed != tt.want.Gohlayed {
-				t.Errorf("ParseHeaders() got.Gohlayed = %v, want %v", got.Gohlayed, tt.want.Gohlayed)
+			if got, err := ParseHeaders(&tt.args.headers); err != nil || !cmp.Equal(got, tt.want) {
+				t.Errorf("ParseHeaders() = %v, want %v. err: %v", got, tt.want, err)
 			}
 		})
 	}
