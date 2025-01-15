@@ -91,3 +91,11 @@ services:
           -k "future" \
           -t gohlay \
           -H GOHLAY="$(date -u -d "+30 seconds")"
+
+  opentelemetry-collector:
+    ports:
+      - 4317:4317
+      - 4318:4318
+    volumes:
+      - ./otel.yaml:/etc/otelcol/config.yaml
+    image: otel/opentelemetry-collector
