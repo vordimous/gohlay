@@ -2,19 +2,23 @@ package otelcli
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/spf13/cobra"
 	"go.opentelemetry.io/contrib/bridges/otelslog"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
+	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/log/global"
 	"go.opentelemetry.io/otel/sdk/log"
-
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	"go.opentelemetry.io/otel/trace"
+
+	"go.opentelemetry.io/otel/metric"
+	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 )
 
 func CobraWithLogging(cmd *cobra.Command) {
@@ -50,7 +54,7 @@ func CobraWithLogging(cmd *cobra.Command) {
 		}
 	}
 	persistentPostRun := cmd.PersistentPostRun
-	cmd.PersistentPostRun = func(cmd *cobra.Command, args []string){
+	cmd.PersistentPostRun = func(cmd *cobra.Command, args []string) {
 		// Ensure the logger is shutdown before exiting so all pending logs are exported
 		defer lp.Shutdown(ctx)
 		if persistentPostRun != nil {
@@ -85,9 +89,9 @@ func CobraWithTracing(cmd *cobra.Command) {
 	}
 
 	tp := sdktrace.NewTracerProvider(
-			sdktrace.WithBatcher(exp),
-			sdktrace.WithResource(r),
-		)
+		sdktrace.WithBatcher(exp),
+		sdktrace.WithResource(r),
+	)
 
 	otel.SetTracerProvider(tp)
 
@@ -103,7 +107,7 @@ func CobraWithTracing(cmd *cobra.Command) {
 		}
 	}
 	persistentPostRun := cmd.PersistentPostRun
-	cmd.PersistentPostRun = func(cmd *cobra.Command, args []string){
+	cmd.PersistentPostRun = func(cmd *cobra.Command, args []string) {
 		// Handle shutdown properly so nothing leaks.
 		defer func() { _ = tp.Shutdown(ctx) }()
 
@@ -114,3 +118,68 @@ func CobraWithTracing(cmd *cobra.Command) {
 	}
 }
 
+func CobraWithMetrics(cmd *cobra.Command) {
+	ctx := cmd.Context()
+	name := cmd.Use
+
+	exp, err := otlpmetrichttp.New(ctx,
+		otlpmetrichttp.WithInsecure(),
+	)
+	if err != nil {
+		panic("failed to initialize otlpmetrichttp exporter")
+	}
+
+	// Create a new tracer provider with a batch span processor and the given exporter.
+	// Ensure default SDK resources and the required service name are set.
+	r, err := resource.Merge(
+		resource.Default(),
+		resource.NewWithAttributes(
+			semconv.SchemaURL,
+			semconv.ServiceName(name),
+		),
+	)
+
+	if err != nil {
+		panic(err)
+	}
+	meterProvider := sdkmetric.NewMeterProvider(
+		sdkmetric.WithResource(r),
+		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(exp,
+			// Default is 1m. Set to 3s for demonstrative purposes.
+			sdkmetric.WithInterval(3*time.Second))),
+	)
+
+	// Register as global meter provider so that it can be used via otel.Meter
+	// and accessed using otel.GetMeterProvider.
+	// Most instrumentation libraries use the global meter provider as default.
+	// If the global meter provider is not set then a no-op implementation
+	// is used, which fails to generate data.
+	otel.SetMeterProvider(meterProvider)
+
+	meter := otel.Meter(name)
+	// Finally, set the tracer that can be used for this package.
+	cliCounter, err := meter.Int64Counter(
+		"cli.counter",
+		metric.WithDescription("Number of CLI calls."),
+		metric.WithUnit("{call}"),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	persistentPreRun := cmd.PersistentPreRun
+	cmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
+		cliCounter.Add(ctx, 1)
+		if persistentPreRun != nil {
+			persistentPreRun(cmd, args)
+		}
+	}
+	persistentPostRun := cmd.PersistentPostRun
+	cmd.PersistentPostRun = func(cmd *cobra.Command, args []string) {
+		// Handle shutdown properly so nothing leaks.
+		defer func() { _ = meterProvider.Shutdown(ctx) }()
+		if persistentPostRun != nil {
+			persistentPostRun(cmd, args)
+		}
+	}
+}

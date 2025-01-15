@@ -29,6 +29,7 @@ func Execute() {
 	rootCmd.SetContext(context.Background())
 	otelcli.CobraWithLogging(rootCmd)
 	otelcli.CobraWithTracing(rootCmd)
+	otelcli.CobraWithMetrics(rootCmd)
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
