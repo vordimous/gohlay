@@ -10,6 +10,9 @@ import (
 	"github.com/spf13/viper"
 	"github.com/vordimous/gohlay/configs"
 	"github.com/vordimous/gohlay/otelcli"
+	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
+	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -27,9 +30,12 @@ Kafka topics on a schedule set by a Kafka message header.`,
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	rootCmd.SetContext(context.Background())
-	otelcli.CobraWithLogging(rootCmd)
-	otelcli.CobraWithTracing(rootCmd)
-	otelcli.CobraWithMetrics(rootCmd)
+	otelcli.Cobra(
+		rootCmd,
+		otelcli.WithLogging(otlploghttp.WithInsecure()),
+		otelcli.WithTracing(otlptracehttp.WithInsecure()),
+		otelcli.WithMetrics(otlpmetrichttp.WithInsecure()),
+	)
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
